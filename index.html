@@ -691,7 +691,7 @@ function AdminLogin({ onLogin }) {
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMissed, syncStatus, onSync }) {
   const studied = cards.filter(c => progress[c.id]).length;
-  const knownWellCount = cards.filter(c => progress[c.id] && progress[c.id].reps >= 3).length;
+  const knownWellCount = cards.filter(c => progress[c.id] && progress[c.id].reps >= 1).length;
   const [showMissed, setShowMissed] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -727,7 +727,6 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMi
           </div>
           <div className="home-stat">
             <span className="home-stat-label">Correct</span>
-            <span className="home-stat-label" style={{fontSize:11, color:'var(--text-muted)', marginLeft:4}}>(3+ times)</span>
             <span className="home-stat-value" style={{color:'var(--green)'}}>{knownWellCount}</span>
           </div>
         </div>
