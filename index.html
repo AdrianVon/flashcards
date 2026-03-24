@@ -694,7 +694,7 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMi
     <div className="container">
       <div className="home-hero">
         <h1>Flashcards</h1>
-        <p>Study smarter with spaced repetition</p>
+        <p>Made by Big Red and Gordito for Class 26C</p>
       </div>
 
       <div className="card">
@@ -709,8 +709,8 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMi
             <span className="home-stat-value">{studied} / {cards.length}</span>
           </div>
           <div className="home-stat">
-            <span className="home-stat-label">Known Well</span>
-            <span className="home-stat-label" style={{fontSize:11, color:'var(--text-muted)', marginLeft:4}}>(correct 3+ times)</span>
+            <span className="home-stat-label">Correct</span>
+            <span className="home-stat-label" style={{fontSize:11, color:'var(--text-muted)', marginLeft:4}}>(3+ times)</span>
             <span className="home-stat-value" style={{color:'var(--green)'}}>{knownWellCount}</span>
           </div>
         </div>
