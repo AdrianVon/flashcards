@@ -689,7 +689,7 @@ function AdminLogin({ onLogin }) {
 }
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
-function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMissed }) {
+function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMissed, syncStatus, onSync }) {
   const studied = cards.filter(c => progress[c.id]).length;
   const knownWellCount = cards.filter(c => progress[c.id] && progress[c.id].reps >= 3).length;
   const [showMissed, setShowMissed] = useState(false);
@@ -701,6 +701,18 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMi
         <h1>Flashcards</h1>
         <p>Made by Big Red and Gordito for Class 26C</p>
       </div>
+
+      {syncStatus === 'syncing' && (
+        <div style={{textAlign:'center', color:'var(--text-muted)', fontSize:13, marginBottom:12}}>
+          &#8987; Loading cards...
+        </div>
+      )}
+      {syncStatus === 'error' && (
+        <div className="alert alert-error" style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+          <span>&#10007; Could not load cards from server.</span>
+          <button className="btn btn-sm btn-outline" style={{color:'#fca5a5', borderColor:'#fca5a5', marginLeft:8}} onClick={onSync}>Retry</button>
+        </div>
+      )}
 
       <div className="card">
         <div className="section-title">Your Progress</div>
@@ -794,7 +806,9 @@ function App() {
   const [syncStatus, setSyncStatus] = useState('idle'); // idle | syncing | done | error
 
   // Fetch shared cards from GitHub on mount
-  useEffect(() => {
+  useEffect(() => { syncCards(); }, []);
+
+  function syncCards() {
     setSyncStatus('syncing');
     fetchRemoteCards().then(remote => {
       if (remote && Array.isArray(remote)) {
@@ -805,7 +819,7 @@ function App() {
         setSyncStatus('error');
       }
     });
-  }, []);
+  }
 
   function setCards(val) {
     const v = typeof val === 'function' ? val(cards) : val;
@@ -876,6 +890,8 @@ function App() {
           onAdmin={handleAdminClick}
           onReset={handleReset}
           lastMissed={lastMissed}
+          syncStatus={syncStatus}
+          onSync={syncCards}
         />
       )}
       {screen === 'study' && (
