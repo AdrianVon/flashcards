@@ -179,7 +179,6 @@ const { useState, useEffect, useCallback, useRef } = React;
 const STORAGE_KEYS = {
   cards: 'fc_cards_v1',
   progress: 'fc_progress_v1',
-  adminAuth: 'fc_admin_auth',
   adminToken: 'fc_admin_token',
 };
 
@@ -200,7 +199,6 @@ async function fetchRemoteCards() {
 }
 
 async function pushCardsToGitHub(newCards, token) {
-  // Get current SHA
   const r = await fetch(GITHUB_API_URL, {
     headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' }
   });
@@ -485,7 +483,7 @@ function QuizScreen({ cards, onBack }) {
 }
 
 // ─── Admin Panel ──────────────────────────────────────────────────────────────
-function AdminPanel({ cards, setCards, onBack }) {
+function AdminPanel({ cards, setCards, onBack, onLogout }) {
   const [front, setFront] = useState('');
   const [back, setBack] = useState('');
   const [editId, setEditId] = useState(null);
@@ -556,7 +554,10 @@ function AdminPanel({ cards, setCards, onBack }) {
       <div className="admin-wrap">
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
           <h2 style={{fontSize:22, fontWeight:800}}>Admin Panel</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
+          <div style={{display:'flex', gap:8}}>
+            <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
+            <button className="btn btn-ghost btn-sm" style={{color:'var(--red)'}} onClick={onLogout}>Logout</button>
+          </div>
         </div>
         {msg && <div className={`alert alert-${msg.type} animate-in`}>{msg.text}</div>}
 
@@ -740,7 +741,7 @@ function App() {
   const [cards, setCardsRaw] = useState(() => loadJSON(STORAGE_KEYS.cards, DEFAULT_CARDS));
   const [progress, setProgressRaw] = useState(() => loadJSON(STORAGE_KEYS.progress, {}));
   const [screen, setScreen] = useState('home');
-  const [adminAuthed, setAdminAuthed] = useState(() => loadJSON(STORAGE_KEYS.adminAuth, false));
+  const [adminAuthed, setAdminAuthed] = useState(false);
   const [studyCards, setStudyCards] = useState([]);
   const [studyTitle, setStudyTitle] = useState('');
   const [studyKey, setStudyKey] = useState(0);
@@ -791,9 +792,13 @@ function App() {
     else { setScreen('admin-login'); }
   }
 
+  function handleAdminLogout() {
+    setAdminAuthed(false);
+    setScreen('home');
+  }
+
   function handleAdminLogin() {
     setAdminAuthed(true);
-    saveJSON(STORAGE_KEYS.adminAuth, true);
     setScreen('admin');
   }
 
@@ -850,6 +855,7 @@ function App() {
           cards={cards}
           setCards={setCards}
           onBack={() => setScreen('home')}
+          onLogout={handleAdminLogout}
         />
       )}
     </>
