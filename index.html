@@ -175,19 +175,54 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
-// âââ Storage Keys ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Storage Keys ────────────────────────────────────────────────────────────
 const STORAGE_KEYS = {
   cards: 'fc_cards_v1',
   progress: 'fc_progress_v1',
   adminAuth: 'fc_admin_auth',
+  adminToken: 'fc_admin_token',
 };
 
 const ADMIN_PASSWORD = 'admin123';
 
-// âââ Default Cards ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── GitHub Card Sync ─────────────────────────────────────────────────────────
+const REPO = 'AdrianVon/flashcards';
+const CARDS_FILE = 'cards.json';
+const CARDS_RAW_URL = `https://raw.githubusercontent.com/${REPO}/main/${CARDS_FILE}`;
+const GITHUB_API_URL = `https://api.github.com/repos/${REPO}/contents/${CARDS_FILE}`;
+
+async function fetchRemoteCards() {
+  try {
+    const r = await fetch(CARDS_RAW_URL + '?t=' + Date.now());
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function pushCardsToGitHub(newCards, token) {
+  // Get current SHA
+  const r = await fetch(GITHUB_API_URL, {
+    headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) throw new Error('Failed to read cards.json from GitHub (status ' + r.status + ')');
+  const file = await r.json();
+  const sha = file.sha;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(newCards, null, 2))));
+  const put = await fetch(GITHUB_API_URL, {
+    method: 'PUT',
+    headers: { Authorization: 'token ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Update cards via admin panel', content, sha })
+  });
+  if (!put.ok) {
+    const err = await put.json().catch(() => ({}));
+    throw new Error(err.message || 'GitHub API error ' + put.status);
+  }
+}
+
+// ─── Default Cards ────────────────────────────────────────────────────────────
 const DEFAULT_CARDS = [];
 
-// âââ SM-2 Spaced Repetition (simplified) âââââââââââââââââââââââââââââââââââââ
+// ─── SM-2 Spaced Repetition (simplified) ─────────────────────────────────────
 function getNextReview(prev, quality) {
   const now = Date.now();
   if (!prev) {
@@ -211,7 +246,7 @@ function isDue(progressEntry) {
   return Date.now() >= progressEntry.nextReview;
 }
 
-// âââ Local Storage Helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Local Storage Helpers ────────────────────────────────────────────────────
 function loadJSON(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
 }
@@ -219,7 +254,7 @@ function saveJSON(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
-// âââ Flashcard Component ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Flashcard Component ──────────────────────────────────────────────────────
 function Flashcard({ card, index, total, flipped, onFlip }) {
   return (
     <div className="fc-scene">
@@ -239,7 +274,7 @@ function Flashcard({ card, index, total, flipped, onFlip }) {
   );
 }
 
-// âââ Study Screen âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Study Screen ─────────────────────────────────────────────────────────────
 function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, title }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -273,7 +308,7 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
     return (
       <div className="container">
         <div className="complete-wrap animate-in">
-          <div style={{fontSize:48, marginBottom:12}}>ð</div>
+          <div style={{fontSize:48, marginBottom:12}}>{String.fromCodePoint(0x1F389)}</div>
           <h2>Session Complete!</h2>
           <p>{title || 'All cards reviewed.'}</p>
           <div className="complete-stats">
@@ -301,7 +336,7 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
           {missedCards.length > 0 && (
             <div className="missed-list mt-8">
               <button className="btn btn-ghost btn-sm" onClick={() => setShowMissed(s => !s)} style={{marginBottom:12}}>
-                {showMissed ? 'â² Hide' : 'â¼ Show'} missed cards
+                {showMissed ? '&#x25B2; Hide' : '&#x25BC; Show'} missed cards
               </button>
               {showMissed && missedCards.map((c, i) => (
                 <div key={c.id + i} className="missed-item animate-in">
@@ -320,10 +355,10 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
     <div className="container">
       <div className="study-wrap">
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>â Back</button>
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
           <div className="study-stats">
-            <span>â <span className="correct">{sessionStats.correct}</span></span>
-            <span>â <span className="incorrect">{sessionStats.incorrect}</span></span>
+            <span>&#10003; <span className="correct">{sessionStats.correct}</span></span>
+            <span>&#10007; <span className="incorrect">{sessionStats.incorrect}</span></span>
           </div>
         </div>
         <div className="study-progress-bar">
@@ -342,8 +377,8 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
         {flipped && !graded && (
           <div className="study-controls animate-in">
             <button className="btn btn-outline btn-lg" style={{minWidth:80, justifyContent:'center'}} onClick={() => setFlipped(false)}>Flip</button>
-            <button className="btn btn-red btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(false)}>â Incorrect</button>
-            <button className="btn btn-green btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(true)}>â Correct</button>
+            <button className="btn btn-red btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(false)}>&#10007; Incorrect</button>
+            <button className="btn btn-green btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(true)}>&#10003; Correct</button>
           </div>
         )}
       </div>
@@ -351,7 +386,7 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
   );
 }
 
-// âââ Quiz Screen ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Quiz Screen ──────────────────────────────────────────────────────────────
 function QuizScreen({ cards, onBack }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -393,7 +428,7 @@ function QuizScreen({ cards, onBack }) {
     return (
       <div className="container">
         <div className="complete-wrap animate-in">
-          <div style={{fontSize:48, marginBottom:12}}>{pct >= 70 ? 'ð' : 'ð'}</div>
+          <div style={{fontSize:48, marginBottom:12}}>{pct >= 70 ? String.fromCodePoint(0x1F3C6) : String.fromCodePoint(0x1F4DD)}</div>
           <h2>Quiz Complete!</h2>
           <p>You scored {score} / {cards.length} ({pct}%)</p>
           <div className="complete-actions mt-4">
@@ -408,7 +443,7 @@ function QuizScreen({ cards, onBack }) {
     <div className="container">
       <div className="quiz-wrap">
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>â Back</button>
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
           <span className="text-muted" style={{fontSize:14}}>Score: {score} / {index}</span>
         </div>
         <div className="study-progress-bar mb-4">
@@ -435,11 +470,11 @@ function QuizScreen({ cards, onBack }) {
         {selected !== null && (
           <>
             <div className={`quiz-feedback ${selected === card.back ? 'correct' : 'wrong'} animate-in`}>
-              {selected === card.back ? 'â Correct!' : 'â Incorrect'}
+              {selected === card.back ? '&#10003; Correct!' : '&#10007; Incorrect'}
             </div>
             <div className="quiz-next animate-in">
               <button className="btn btn-primary" onClick={next}>
-                {index + 1 >= cards.length ? 'See Results' : 'Next â'}
+                {index + 1 >= cards.length ? 'See Results' : 'Next &#8594;'}
               </button>
             </div>
           </>
@@ -449,41 +484,101 @@ function QuizScreen({ cards, onBack }) {
   );
 }
 
-// âââ Admin Panel ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Admin Panel ──────────────────────────────────────────────────────────────
 function AdminPanel({ cards, setCards, onBack }) {
   const [front, setFront] = useState('');
   const [back, setBack] = useState('');
   const [editId, setEditId] = useState(null);
   const [msg, setMsg] = useState(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [token, setToken] = useState(() => loadJSON(STORAGE_KEYS.adminToken, ''));
+  const [tokenInput, setTokenInput] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  function flash(text, type='success') { setMsg({text, type}); setTimeout(() => setMsg(null), 3000); }
+  function flash(text, type='success') { setMsg({text, type}); setTimeout(() => setMsg(null), 4000); }
 
-  function save() {
+  async function pushCards(newCards) {
+    if (!token) { flash('Set a GitHub token first (see setup below).', 'error'); return false; }
+    setSaving(true);
+    try {
+      await pushCardsToGitHub(newCards, token);
+      setCards(newCards);
+      setSaving(false);
+      return true;
+    } catch(e) {
+      flash('GitHub sync failed: ' + e.message, 'error');
+      setSaving(false);
+      return false;
+    }
+  }
+
+  async function save() {
     if (!front.trim() || !back.trim()) return flash('Both fields required.', 'error');
+    let newCards;
     if (editId) {
-      setCards(prev => prev.map(c => c.id === editId ? {...c, front: front.trim(), back: back.trim()} : c));
-      flash('Card updated!');
+      newCards = cards.map(c => c.id === editId ? {...c, front: front.trim(), back: back.trim()} : c);
     } else {
       const id = 'card_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-      setCards(prev => [...prev, { id, front: front.trim(), back: back.trim() }]);
-      flash('Card added!');
+      newCards = [...cards, { id, front: front.trim(), back: back.trim() }];
     }
-    setFront(''); setBack(''); setEditId(null);
+    const ok = await pushCards(newCards);
+    if (ok) {
+      flash(editId ? 'Card updated! Visible to all users.' : 'Card added! Visible to all users.');
+      setFront(''); setBack(''); setEditId(null);
+    }
+  }
+
+  async function del(id) {
+    const newCards = cards.filter(c => c.id !== id);
+    const ok = await pushCards(newCards);
+    if (ok) flash('Card deleted.');
+  }
+
+  async function deleteAll() {
+    const ok = await pushCards([]);
+    if (ok) { setConfirmReset(false); flash('All cards deleted.'); }
   }
 
   function startEdit(card) { setEditId(card.id); setFront(card.front); setBack(card.back); }
   function cancelEdit() { setEditId(null); setFront(''); setBack(''); }
-  function del(id) { setCards(prev => prev.filter(c => c.id !== id)); }
+
+  function saveToken() {
+    const t = tokenInput.trim();
+    if (!t) return;
+    saveJSON(STORAGE_KEYS.adminToken, t);
+    setToken(t);
+    setTokenInput('');
+    flash('GitHub token saved on this device.');
+  }
 
   return (
     <div className="container">
       <div className="admin-wrap">
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
           <h2 style={{fontSize:22, fontWeight:800}}>Admin Panel</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>â Back</button>
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
         </div>
         {msg && <div className={`alert alert-${msg.type} animate-in`}>{msg.text}</div>}
+
+        {/* GitHub Token Setup */}
+        <div className="card" style={{marginBottom:16}}>
+          <div className="section-title">GitHub Sync</div>
+          {token ? (
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:8}}>
+              <span style={{fontSize:13, color:'var(--green)'}}>&#10003; Token configured &#8212; cards sync to all users</span>
+              <button className="btn btn-ghost btn-sm" style={{color:'var(--red)', fontSize:12}} onClick={() => { saveJSON(STORAGE_KEYS.adminToken, ''); setToken(''); flash('Token removed.'); }}>Remove</button>
+            </div>
+          ) : (
+            <div>
+              <p style={{fontSize:13, color:'var(--text-muted)', marginBottom:10}}>Paste a GitHub Personal Access Token (with <strong>repo</strong> scope) to sync cards across all devices.</p>
+              <div style={{display:'flex', gap:8}}>
+                <input className="form-input" style={{flex:1}} type="password" value={tokenInput} onChange={e => setTokenInput(e.target.value)} placeholder="ghp_..." onKeyDown={e => e.key === 'Enter' && saveToken()} />
+                <button className="btn btn-primary" onClick={saveToken}>Save Token</button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="card">
           <div className="section-title">{editId ? 'Edit Card' : 'Add Card'}</div>
           <div className="admin-form">
@@ -496,7 +591,7 @@ function AdminPanel({ cards, setCards, onBack }) {
               <textarea className="form-input" rows={3} value={back} onChange={e => setBack(e.target.value)} placeholder="Enter the answer..." />
             </div>
             <div style={{display:'flex', gap:8}}>
-              <button className="btn btn-primary" onClick={save}>{editId ? 'Save Changes' : 'Add Card'}</button>
+              <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving...' : (editId ? 'Save Changes' : 'Add Card')}</button>
               {editId && <button className="btn btn-outline" onClick={cancelEdit}>Cancel</button>}
             </div>
           </div>
@@ -520,7 +615,7 @@ function AdminPanel({ cards, setCards, onBack }) {
               </div>
               <div className="card-item-actions">
                 <button className="btn btn-outline btn-sm" onClick={() => startEdit(c)}>Edit</button>
-                <button className="btn btn-ghost btn-sm" style={{color:'var(--red)'}} onClick={() => del(c.id)}>â</button>
+                <button className="btn btn-ghost btn-sm" style={{color:'var(--red)'}} onClick={() => del(c.id)} disabled={saving}>&#10005;</button>
               </div>
             </div>
           ))}
@@ -530,10 +625,10 @@ function AdminPanel({ cards, setCards, onBack }) {
           <div className="modal-overlay">
             <div className="modal-box animate-in">
               <h3>Delete All Cards?</h3>
-              <p>This will permanently remove all {cards.length} cards. This cannot be undone.</p>
+              <p>This will remove all {cards.length} cards for everyone. This cannot be undone.</p>
               <div className="modal-actions">
                 <button className="btn btn-outline" onClick={() => setConfirmReset(false)}>Cancel</button>
-                <button className="btn btn-red" onClick={() => { setCards([]); setConfirmReset(false); flash('All cards deleted.'); }}>Delete All</button>
+                <button className="btn btn-red" onClick={deleteAll} disabled={saving}>{saving ? 'Deleting...' : 'Delete All'}</button>
               </div>
             </div>
           </div>
@@ -543,7 +638,7 @@ function AdminPanel({ cards, setCards, onBack }) {
   );
 }
 
-// âââ Admin Login ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Admin Login ──────────────────────────────────────────────────────────────
 function AdminLogin({ onLogin }) {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState(false);
@@ -576,7 +671,7 @@ function AdminLogin({ onLogin }) {
   );
 }
 
-// âââ Home Screen ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Home Screen ──────────────────────────────────────────────────────────────
 function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin }) {
   const dueCount = cards.filter(c => isDue(progress[c.id])).length;
   const studied = cards.filter(c => progress[c.id]).length;
@@ -613,34 +708,34 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin }) {
 
       {cards.length === 0 ? (
         <div className="card mt-4 text-center">
-          <p className="text-muted" style={{fontSize:15}}>No cards yet â an admin needs to add some!</p>
+          <p className="text-muted" style={{fontSize:15}}>No cards yet &#8212; an admin needs to add some!</p>
         </div>
       ) : (
         <div className="home-actions mt-4">
           <button className="btn btn-primary btn-full btn-lg" onClick={() => onStudy('all')}>
-            ð Study All Cards
+            &#128218; Study All Cards
           </button>
           {dueCount > 0 && (
             <button className="btn btn-outline btn-full btn-lg" onClick={() => onStudy('due')}>
-              â° Study Due Cards ({dueCount})
+              &#9200; Study Due Cards ({dueCount})
             </button>
           )}
           <button className="btn btn-outline btn-full btn-lg" onClick={onQuiz}>
-            ð¯ Quiz Mode
+            &#127919; Quiz Mode
           </button>
         </div>
       )}
 
       <div className="text-center mt-8">
         <button className="btn btn-ghost btn-sm" onClick={onAdmin} style={{color:'var(--text-muted)'}}>
-          â Admin
+          &#9881; Admin
         </button>
       </div>
     </div>
   );
 }
 
-// âââ App ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
   const [cards, setCardsRaw] = useState(() => loadJSON(STORAGE_KEYS.cards, DEFAULT_CARDS));
   const [progress, setProgressRaw] = useState(() => loadJSON(STORAGE_KEYS.progress, {}));
@@ -649,6 +744,21 @@ function App() {
   const [studyCards, setStudyCards] = useState([]);
   const [studyTitle, setStudyTitle] = useState('');
   const [studyKey, setStudyKey] = useState(0);
+  const [syncStatus, setSyncStatus] = useState('idle'); // idle | syncing | done | error
+
+  // Fetch shared cards from GitHub on mount
+  useEffect(() => {
+    setSyncStatus('syncing');
+    fetchRemoteCards().then(remote => {
+      if (remote && Array.isArray(remote)) {
+        setCardsRaw(remote);
+        saveJSON(STORAGE_KEYS.cards, remote);
+        setSyncStatus('done');
+      } else {
+        setSyncStatus('error');
+      }
+    });
+  }, []);
 
   function setCards(val) {
     const v = typeof val === 'function' ? val(cards) : val;
