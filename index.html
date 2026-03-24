@@ -193,9 +193,14 @@ const GITHUB_API_URL = `https://api.github.com/repos/${REPO}/contents/${CARDS_FI
 
 async function fetchRemoteCards() {
   try {
-    const r = await fetch(CARDS_RAW_URL + '?t=' + Date.now());
+    const r = await fetch(GITHUB_API_URL, {
+      headers: { Accept: 'application/vnd.github.v3+json' },
+      cache: 'no-store'
+    });
     if (!r.ok) return null;
-    return await r.json();
+    const data = await r.json();
+    const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+    return JSON.parse(decoded);
   } catch { return null; }
 }
 
