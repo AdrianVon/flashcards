@@ -73,7 +73,7 @@
   .fc-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; padding: 24px; border: 1.5px solid var(--border); user-select: none; }
   .fc-front { background: var(--surface); }
   .fc-back { background: var(--surface2); transform: rotateY(180deg); }
-  .fc-text { font-size: clamp(15px, 4vw, 22px); font-weight: 600; text-align: center; line-height: 1.5; }
+  .fc-text { font-size: clamp(15px, 4vw, 22px); font-weight: 600; text-align: center; line-height: 1.5; white-space: pre-wrap; }
   .fc-label { position: absolute; top: 10px; left: 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
   .fc-counter { position: absolute; top: 10px; right: 14px; font-size: 12px; color: var(--text-muted); }
 
@@ -168,6 +168,20 @@
   .alert { border-radius: 8px; padding: 12px 16px; font-size: 14px; margin-bottom: 12px; }
   .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
   .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+
+  /* Crossword — mobile-first full-screen layout */
+  .cw-screen { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: var(--bg); }
+  .cw-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .cw-clue-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; min-height: 50px; }
+  .cw-clue-text { flex: 1; font-size: 13px; line-height: 1.4; }
+  .cw-grid-wrap { overflow: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; height: 42vh; padding: 10px; }
+  .cw-controls { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .cw-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .cw-tab { flex: 1; padding: 9px 0; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); -webkit-tap-highlight-color: transparent; }
+  .cw-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .cw-clue-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .cw-clue-row { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.4; cursor: pointer; color: var(--text-muted); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .cw-clue-row.active { background: rgba(124,106,247,0.1); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -688,8 +702,424 @@ function AdminLogin({ onLogin }) {
   );
 }
 
+// ─── Crossword Engine ─────────────────────────────────────────────────────────
+const CW_ENTRIES = [
+  { word: 'SUPERIORITY', clue: 'Air & Space ___ — one of the 5 AF Core Missions' },
+  { word: 'OPERATIONAL', clue: 'Level of warfare that links strategy to tactics' },
+  { word: 'STRATEGIC',   clue: 'Highest level of warfare; integrates national policy' },
+  { word: 'COMBATANT',   clue: '___ Command: broad mission under a single commander from 2+ departments' },
+  { word: 'VIGILANCE',   clue: 'Global ___: AF distinctive capability providing ISR awareness' },
+  { word: 'PRESIDENT',   clue: 'Leads both operational and administrative chains of command' },
+  { word: 'TACTICAL',    clue: 'Level where Airmen most commonly operate' },
+  { word: 'MOBILITY',    clue: 'Rapid Global ___: AF capability to move forces anywhere' },
+  { word: 'COHESION',    clue: "One of the 5 C's of Mission Command" },
+  { word: 'COURAGE',     clue: 'Navy & Marines core value (alongside Honor and Commitment)' },
+  { word: 'COMMAND',     clue: 'Mission ___ uses delegated authority and disciplined initiative' },
+  { word: 'AIRMEN',      clue: 'Who most commonly operates at the Tactical Level' },
+  { word: 'STRIKE',      clue: 'Global ___: delivers rapid, decisive combat power' },
+  { word: 'POWER',       clue: 'Global ___: ability to project lethal force anywhere' },
+  { word: 'HONOR',       clue: 'Navy & Marines core value (alongside Courage and Commitment)' },
+  { word: 'REACH',       clue: 'Global ___: provides the Rapid Global Mobility capability' },
+  { word: 'JADO',        clue: 'Joint All-Domain Operations (abbr.)' },
+  { word: 'CJCS',        clue: 'Principal military advisor to the President (abbr.)' },
+  { word: 'ISR',         clue: 'Intelligence, Surveillance, and Reconnaissance (abbr.)' },
+  { word: 'ACE',         clue: 'Agile Combat Employment (abbr.)' },
+];
+
+const CW_SIZE = 25;
+
+function cwCanPlace(grid, word, r, c, dir) {
+  const len = word.length;
+  if (dir === 'across') {
+    if (r < 0 || r >= CW_SIZE || c < 0 || c + len > CW_SIZE) return false;
+    if (c > 0 && grid[r][c - 1]) return false;
+    if (c + len < CW_SIZE && grid[r][c + len]) return false;
+  } else {
+    if (c < 0 || c >= CW_SIZE || r < 0 || r + len > CW_SIZE) return false;
+    if (r > 0 && grid[r - 1][c]) return false;
+    if (r + len < CW_SIZE && grid[r + len][c]) return false;
+  }
+  let hits = 0;
+  for (let i = 0; i < len; i++) {
+    const cr = dir === 'across' ? r : r + i;
+    const cc = dir === 'across' ? c + i : c;
+    const cell = grid[cr][cc];
+    if (cell) {
+      if (cell !== word[i]) return false;
+      hits++;
+    } else {
+      if (dir === 'across') {
+        if (cr > 0 && grid[cr - 1][cc]) return false;
+        if (cr < CW_SIZE - 1 && grid[cr + 1][cc]) return false;
+      } else {
+        if (cc > 0 && grid[cr][cc - 1]) return false;
+        if (cc < CW_SIZE - 1 && grid[cr][cc + 1]) return false;
+      }
+    }
+  }
+  return hits > 0;
+}
+
+function cwPlaceWord(grid, word, r, c, dir) {
+  for (let i = 0; i < word.length; i++) {
+    const cr = dir === 'across' ? r : r + i;
+    const cc = dir === 'across' ? c + i : c;
+    grid[cr][cc] = word[i];
+  }
+}
+
+function buildCrossword(entries) {
+  const N = CW_SIZE;
+  const MID = Math.floor(N / 2);
+  const grid = Array(N).fill(null).map(() => Array(N).fill(null));
+  const sorted = [...entries].sort((a, b) => b.word.length - a.word.length);
+  const placed = [];
+
+  // Place first word horizontally at center
+  const fw = sorted[0];
+  const fwC = MID - Math.floor(fw.word.length / 2);
+  cwPlaceWord(grid, fw.word, MID, fwC, 'across');
+  placed.push({ ...fw, r: MID, c: fwC, dir: 'across' });
+
+  for (let i = 1; i < sorted.length; i++) {
+    const entry = sorted[i];
+    const word = entry.word;
+    let best = null, bestScore = -Infinity;
+
+    for (const pw of placed) {
+      const nd = pw.dir === 'across' ? 'down' : 'across';
+      for (let pi = 0; pi < pw.word.length; pi++) {
+        for (let wi = 0; wi < word.length; wi++) {
+          if (pw.word[pi] !== word[wi]) continue;
+          const r = nd === 'down' ? pw.r - wi : pw.r + pi;
+          const c = nd === 'down' ? pw.c + pi : pw.c - wi;
+          if (!cwCanPlace(grid, word, r, c, nd)) continue;
+          let score = 0;
+          for (let j = 0; j < word.length; j++) {
+            const cr = nd === 'across' ? r : r + j;
+            const cc = nd === 'across' ? c + j : c;
+            if (grid[cr][cc]) score++;
+          }
+          const dist = Math.abs(r - MID) + Math.abs(c - MID);
+          const ws = score * 100 - dist;
+          if (ws > bestScore) { bestScore = ws; best = { r, c, dir: nd }; }
+        }
+      }
+    }
+
+    if (best) {
+      cwPlaceWord(grid, word, best.r, best.c, best.dir);
+      placed.push({ ...entry, ...best });
+    }
+  }
+
+  // Trim to used area
+  let minR = N, maxR = 0, minC = N, maxC = 0;
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (grid[r][c]) { minR = Math.min(minR, r); maxR = Math.max(maxR, r); minC = Math.min(minC, c); maxC = Math.max(maxC, c); }
+
+  minR = Math.max(0, minR - 1); maxR = Math.min(N - 1, maxR + 1);
+  minC = Math.max(0, minC - 1); maxC = Math.min(N - 1, maxC + 1);
+  const rows = maxR - minR + 1;
+  const cols = maxC - minC + 1;
+
+  // Build display grid
+  const dg = Array(rows).fill(null).map((_, r) =>
+    Array(cols).fill(null).map((_, c) => {
+      const letter = grid[r + minR][c + minC];
+      return letter ? { letter, number: null } : null;
+    })
+  );
+
+  // Number cells
+  let num = 1;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (!dg[r][c]) continue;
+      const isAS = (c === 0 || !dg[r][c - 1]) && c + 1 < cols && dg[r][c + 1];
+      const isDS = (r === 0 || !dg[r - 1] || !dg[r - 1][c]) && r + 1 < rows && dg[r + 1][c];
+      if (isAS || isDS) dg[r][c].number = num++;
+    }
+  }
+
+  // Map placed words to clue numbers
+  const across = [], down = [];
+  for (const pw of placed) {
+    const adjR = pw.r - minR, adjC = pw.c - minC;
+    if (adjR < 0 || adjC < 0 || adjR >= rows || adjC >= cols) continue;
+    const cell = dg[adjR][adjC];
+    if (!cell || !cell.number) continue;
+    const obj = { number: cell.number, clue: pw.clue, word: pw.word, r: adjR, c: adjC };
+    if (pw.dir === 'across') across.push(obj);
+    else down.push(obj);
+  }
+  across.sort((a, b) => a.number - b.number);
+  down.sort((a, b) => a.number - b.number);
+
+  return { grid: dg, rows, cols, across, down };
+}
+
+// ─── Crossword Screen ──────────────────────────────────────────────────────────
+const CELL = 30; // fixed cell size — grid scrolls
+function CrosswordScreen({ onBack }) {
+  const cw = React.useMemo(() => buildCrossword(CW_ENTRIES), []);
+  const [userGrid, setUserGrid] = useState(() =>
+    Array(cw.rows).fill(null).map(() => Array(cw.cols).fill(''))
+  );
+  const [sel, setSel] = useState(null);
+  const [selDir, setSelDir] = useState('across');
+  const [checked, setChecked] = useState(false);
+  const [solved, setSolved] = useState(false);
+  const [clueTab, setClueTab] = useState('across');
+  const inputRef = useRef(null);
+  const gridRef = useRef(null);
+  const cellRefs = useRef({});
+
+  function getWordCells(r, c, dir) {
+    let sr = r, sc = c;
+    while (true) {
+      const pr = dir === 'down' ? sr - 1 : sr;
+      const pc = dir === 'across' ? sc - 1 : sc;
+      if (pr < 0 || pc < 0 || !cw.grid[pr] || !cw.grid[pr][pc]) break;
+      sr = pr; sc = pc;
+    }
+    const cells = [];
+    let cr = sr, cc = sc;
+    while (cr < cw.rows && cc < cw.cols && cw.grid[cr] && cw.grid[cr][cc]) {
+      cells.push({ r: cr, c: cc });
+      if (dir === 'down') cr++; else cc++;
+    }
+    return cells;
+  }
+
+  function validDirs(r, c) {
+    const hasH = (c > 0 && cw.grid[r][c - 1]) || (c + 1 < cw.cols && cw.grid[r][c + 1]);
+    const hasV = (r > 0 && cw.grid[r - 1] && cw.grid[r - 1][c]) || (r + 1 < cw.rows && cw.grid[r + 1] && cw.grid[r + 1][c]);
+    return [hasH && 'across', hasV && 'down'].filter(Boolean);
+  }
+
+  function scrollCellIntoView(r, c) {
+    const el = cellRefs.current[`${r},${c}`];
+    const grid = gridRef.current;
+    if (!el || !grid) return;
+    const er = el.getBoundingClientRect(), gr = grid.getBoundingClientRect();
+    const pad = 16;
+    if (er.left < gr.left + pad) grid.scrollLeft += er.left - gr.left - pad;
+    else if (er.right > gr.right - pad) grid.scrollLeft += er.right - gr.right + pad;
+    if (er.top < gr.top + pad) grid.scrollTop += er.top - gr.top - pad;
+    else if (er.bottom > gr.bottom - pad) grid.scrollTop += er.bottom - gr.bottom + pad;
+  }
+
+  function handleCellClick(r, c) {
+    if (!cw.grid[r][c]) return;
+    let nd = selDir;
+    if (sel && sel.r === r && sel.c === c) {
+      const vd = validDirs(r, c);
+      if (vd.length > 1) { nd = selDir === 'across' ? 'down' : 'across'; setSelDir(nd); setClueTab(nd); }
+    } else {
+      const vd = validDirs(r, c);
+      if (vd.length === 1) { nd = vd[0]; setSelDir(nd); setClueTab(nd); }
+      else if (!vd.includes(selDir)) { nd = vd[0] || 'across'; setSelDir(nd); setClueTab(nd); }
+      setSel({ r, c });
+    }
+    inputRef.current && inputRef.current.focus();
+    scrollCellIntoView(r, c);
+  }
+
+  function handleClueClick(r, c, dir) {
+    setSel({ r, c }); setSelDir(dir); setClueTab(dir);
+    inputRef.current && inputRef.current.focus();
+    scrollCellIntoView(r, c);
+  }
+
+  function checkSolved(ng) {
+    for (let r = 0; r < cw.rows; r++)
+      for (let c = 0; c < cw.cols; c++)
+        if (cw.grid[r][c] && ng[r][c] !== cw.grid[r][c].letter) return false;
+    return true;
+  }
+
+  function handleKeyDown(e) {
+    if (!sel) return;
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      setChecked(false);
+      const ng = userGrid.map(row => [...row]);
+      if (ng[sel.r][sel.c]) {
+        ng[sel.r][sel.c] = ''; setUserGrid(ng);
+      } else {
+        const cells = getWordCells(sel.r, sel.c, selDir);
+        const idx = cells.findIndex(x => x.r === sel.r && x.c === sel.c);
+        if (idx > 0) { setSel(cells[idx - 1]); scrollCellIntoView(cells[idx-1].r, cells[idx-1].c); }
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault(); setSelDir('across'); setClueTab('across');
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault(); setSelDir('down'); setClueTab('down');
+    }
+  }
+
+  function handleInput(e) {
+    if (!sel) return;
+    const raw = e.target.value; e.target.value = '';
+    if (!raw) return;
+    const letter = raw.slice(-1).toUpperCase();
+    if (!/[A-Z]/.test(letter)) return;
+    setChecked(false);
+    const ng = userGrid.map(row => [...row]);
+    ng[sel.r][sel.c] = letter; setUserGrid(ng);
+    if (checkSolved(ng)) setSolved(true);
+    const cells = getWordCells(sel.r, sel.c, selDir);
+    const idx = cells.findIndex(x => x.r === sel.r && x.c === sel.c);
+    let next = null;
+    for (let i = idx + 1; i < cells.length; i++) { if (!ng[cells[i].r][cells[i].c]) { next = cells[i]; break; } }
+    if (!next && idx < cells.length - 1) next = cells[idx + 1];
+    if (next) { setSel(next); scrollCellIntoView(next.r, next.c); }
+  }
+
+  function handleRevealWord() {
+    if (!sel) return;
+    const cells = getWordCells(sel.r, sel.c, selDir);
+    const ng = userGrid.map(row => [...row]);
+    cells.forEach(({ r, c }) => { ng[r][c] = cw.grid[r][c].letter; });
+    setUserGrid(ng); setChecked(false);
+    if (checkSolved(ng)) setSolved(true);
+  }
+
+  function handleReset() {
+    setUserGrid(Array(cw.rows).fill(null).map(() => Array(cw.cols).fill('')));
+    setChecked(false); setSolved(false); setSel(null);
+  }
+
+  const selWordSet = React.useMemo(() =>
+    sel ? new Set(getWordCells(sel.r, sel.c, selDir).map(({ r, c }) => `${r},${c}`)) : new Set()
+  , [sel, selDir]);
+
+  const currentClue = React.useMemo(() => {
+    if (!sel) return null;
+    const cells = getWordCells(sel.r, sel.c, selDir);
+    if (!cells.length) return null;
+    const { r, c } = cells[0];
+    return (selDir === 'across' ? cw.across : cw.down).find(cl => cl.r === r && cl.c === c) || null;
+  }, [sel, selDir]);
+
+  return (
+    <div className="cw-screen">
+      {/* Header */}
+      <div className="cw-header">
+        <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
+        <span style={{ fontWeight: 700, fontSize: 16 }}>
+          {solved ? '&#127881; Solved!' : 'Crossword'}
+        </span>
+        <button className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: 'var(--text-muted)' }} onClick={handleReset}>Reset</button>
+      </div>
+
+      {/* Clue bar + direction toggle */}
+      <div className="cw-clue-bar">
+        <div className="cw-clue-text">
+          {currentClue
+            ? <><span style={{ fontWeight: 700, color: 'var(--accent)', marginRight: 4 }}>{currentClue.number}{selDir === 'across' ? 'A' : 'D'}.</span>{currentClue.clue}</>
+            : <span style={{ color: 'var(--text-muted)' }}>Tap a cell to begin</span>
+          }
+        </div>
+        {sel && validDirs(sel.r, sel.c).length > 1 && (
+          <button className="btn btn-outline btn-sm" style={{ flexShrink: 0, padding: '5px 10px', fontSize: 12 }}
+            onClick={() => { const nd = selDir === 'across' ? 'down' : 'across'; setSelDir(nd); setClueTab(nd); }}>
+            {selDir === 'across' ? '&#8597; Down' : '&#8596; Across'}
+          </button>
+        )}
+      </div>
+
+      {/* Grid */}
+      <div className="cw-grid-wrap" ref={gridRef}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${cw.cols}, ${CELL}px)`,
+          gap: 1, background: 'var(--border)', border: '2px solid var(--border)',
+          borderRadius: 4, width: 'fit-content', margin: '0 auto',
+        }}>
+          {cw.grid.map((row, r) => row.map((cell, c) => {
+            const key = `${r},${c}`;
+            const isSel = sel && sel.r === r && sel.c === c;
+            const isHi = selWordSet.has(key);
+            const ul = userGrid[r][c];
+            const ok = checked && cell && ul === cell.letter;
+            const bad = checked && cell && ul && ul !== cell.letter;
+            let bg = '#111';
+            if (cell) {
+              if (isSel) bg = 'var(--accent)';
+              else if (isHi) bg = 'rgba(124,106,247,0.3)';
+              else if (ok) bg = 'rgba(34,197,94,0.22)';
+              else if (bad) bg = 'rgba(239,68,68,0.22)';
+              else bg = 'var(--surface)';
+            }
+            return (
+              <div key={key}
+                ref={el => { if (el) cellRefs.current[key] = el; }}
+                onClick={() => handleCellClick(r, c)}
+                style={{ width: CELL, height: CELL, background: bg, position: 'relative',
+                  cursor: cell ? 'pointer' : 'default',
+                  WebkitTapHighlightColor: 'transparent', userSelect: 'none', touchAction: 'manipulation' }}
+              >
+                {cell && cell.number && (
+                  <span style={{ position: 'absolute', top: 1, left: 2, fontSize: 7, lineHeight: 1,
+                    fontWeight: 700, color: isSel ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>
+                    {cell.number}
+                  </span>
+                )}
+                {cell && ul && (
+                  <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14, fontWeight: 700, paddingTop: cell.number ? 4 : 0,
+                    color: isSel ? 'white' : bad ? 'var(--red)' : ok ? 'var(--green)' : 'var(--text)' }}>
+                    {ul}
+                  </span>
+                )}
+              </div>
+            );
+          }))}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="cw-controls">
+        <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => setChecked(true)}>Check</button>
+        <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={handleRevealWord} disabled={!sel}>Reveal Word</button>
+      </div>
+
+      {/* Across / Down tabs */}
+      <div className="cw-tabs">
+        <button className={`cw-tab${clueTab === 'across' ? ' active' : ''}`} onClick={() => setClueTab('across')}>Across</button>
+        <button className={`cw-tab${clueTab === 'down' ? ' active' : ''}`} onClick={() => setClueTab('down')}>Down</button>
+      </div>
+
+      {/* Clue list */}
+      <div className="cw-clue-list">
+        {(clueTab === 'across' ? cw.across : cw.down).map(cl => {
+          const isActive = currentClue && currentClue.number === cl.number && selDir === clueTab;
+          return (
+            <div key={cl.number}
+              className={`cw-clue-row${isActive ? ' active' : ''}`}
+              onClick={() => handleClueClick(cl.r, cl.c, clueTab)}>
+              <span style={{ fontWeight: 700, marginRight: 4 }}>{cl.number}.</span>{cl.clue}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Hidden keyboard input */}
+      <input ref={inputRef}
+        style={{ position: 'fixed', left: -9999, top: 0, width: 1, height: 1, opacity: 0 }}
+        onChange={handleInput} onKeyDown={handleKeyDown}
+        autoCapitalize="characters" autoComplete="off" autoCorrect="off"
+        spellCheck={false} inputMode="text"
+      />
+    </div>
+  );
+}
+
 // ─── Home Screen ──────────────────────────────────────────────────────────────
-function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMissed, syncStatus, onSync }) {
+function HomeScreen({ cards, progress, onStudy, onQuiz, onCrossword, onAdmin, onReset, lastMissed, syncStatus, onSync }) {
   const studied = cards.filter(c => progress[c.id]).length;
   const knownWellCount = cards.filter(c => progress[c.id] && progress[c.id].reps >= 1).length;
   const [showMissed, setShowMissed] = useState(false);
@@ -763,6 +1193,9 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onAdmin, onReset, lastMi
           </button>
           <button className="btn btn-outline btn-full btn-lg" onClick={onQuiz}>
             &#127919; Quiz Mode
+          </button>
+          <button className="btn btn-outline btn-full btn-lg" onClick={onCrossword}>
+            &#9997; Crossword
           </button>
           <button className="btn btn-ghost btn-full" style={{color:'var(--text-muted)', fontSize:13}} onClick={() => setConfirmReset(true)}>
             &#8635; Reset All Progress
@@ -886,6 +1319,7 @@ function App() {
           progress={progress}
           onStudy={handleStudy}
           onQuiz={() => setScreen('quiz')}
+          onCrossword={() => setScreen('crossword')}
           onAdmin={handleAdminClick}
           onReset={handleReset}
           lastMissed={lastMissed}
@@ -914,6 +1348,9 @@ function App() {
           cards={[...cards].sort(() => Math.random() - 0.5)}
           onBack={() => setScreen('home')}
         />
+      )}
+      {screen === 'crossword' && (
+        <CrosswordScreen onBack={() => setScreen('home')} />
       )}
       {screen === 'admin-login' && (
         <AdminLogin onLogin={handleAdminLogin} />
