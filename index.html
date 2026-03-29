@@ -169,19 +169,27 @@
   .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
   .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
 
-  /* Crossword — mobile-first full-screen layout */
-  .cw-screen { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: var(--bg); }
-  .cw-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .cw-clue-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; min-height: 50px; }
-  .cw-clue-text { flex: 1; font-size: 13px; line-height: 1.4; }
-  .cw-grid-wrap { overflow: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; padding: 10px; touch-action: pan-x pan-y pinch-zoom; }
-  .cw-controls { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
-  .cw-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .cw-tab { flex: 1; padding: 9px 0; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); -webkit-tap-highlight-color: transparent; }
-  .cw-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  /* Crossword animations */
+  @keyframes cwPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  @keyframes cwGlow { 0%, 100% { box-shadow: 0 0 8px rgba(108,92,231,0.3); } 50% { box-shadow: 0 0 20px rgba(108,92,231,0.6); } }
+  @keyframes cwSolvedBg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  .cw-solved-banner { background: linear-gradient(270deg, #6c5ce7, #ec4899, #a78bfa, #6c5ce7); background-size: 300% 300%; animation: cwSolvedBg 3s ease infinite; padding: 16px; text-align: center; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255,255,255,0.4); }
+
+  /* Crossword — dark theme, mobile-first */
+  .cw-screen { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #0b0b12; }
+  .cw-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #1e1e30; flex-shrink: 0; }
+  .cw-clue-bar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; flex-shrink: 0; min-height: 60px; background: linear-gradient(135deg, #1a1040 0%, #0d1a3a 100%); border-bottom: 2px solid #6c5ce7; }
+  .cw-clue-text { flex: 1; font-size: 16px; line-height: 1.45; font-weight: 600; color: #f0f0ff; }
+  .cw-clue-num { font-weight: 900; color: #a78bfa; margin-right: 6px; font-size: 17px; }
+  .cw-clue-placeholder { color: #555; font-weight: 400; font-style: italic; }
+  .cw-grid-wrap { overflow: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; padding: 12px; touch-action: pan-x pan-y pinch-zoom; background: #0b0b12; }
+  .cw-controls { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid #1e1e30; flex-shrink: 0; }
+  .cw-tabs { display: flex; border-bottom: 1px solid #1e1e30; flex-shrink: 0; }
+  .cw-tab { flex: 1; padding: 10px 0; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; -webkit-tap-highlight-color: transparent; }
+  .cw-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
   .cw-clue-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .cw-clue-row { padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.4; cursor: pointer; color: var(--text-muted); -webkit-tap-highlight-color: transparent; touch-action: manipulation; min-height: 44px; }
-  .cw-clue-row.active { background: rgba(124,106,247,0.15); color: #a794ff; }
+  .cw-clue-row { padding: 13px 16px; border-bottom: 1px solid #1a1a28; font-size: 14px; line-height: 1.45; cursor: pointer; color: #777; -webkit-tap-highlight-color: transparent; touch-action: manipulation; min-height: 44px; }
+  .cw-clue-row.active { background: linear-gradient(90deg, rgba(108,92,231,0.15) 0%, transparent 100%); color: #d4c8ff; }
 </style>
 </head>
 <body>
@@ -873,25 +881,9 @@ function CrosswordScreen({ onBack }) {
   const [checked, setChecked] = useState(false);
   const [solved, setSolved] = useState(false);
   const [clueTab, setClueTab] = useState('across');
-  const [kbHeight, setKbHeight] = useState(0);
   const inputRef = useRef(null);
   const gridRef = useRef(null);
   const cellRefs = useRef({});
-
-  // Track mobile keyboard height via visualViewport
-  useEffect(() => {
-    if (!window.visualViewport) return;
-    const onVV = () => {
-      const vv = window.visualViewport;
-      setKbHeight(Math.round(window.innerHeight - vv.height - vv.offsetTop));
-    };
-    window.visualViewport.addEventListener('resize', onVV);
-    window.visualViewport.addEventListener('scroll', onVV);
-    return () => {
-      window.visualViewport.removeEventListener('resize', onVV);
-      window.visualViewport.removeEventListener('scroll', onVV);
-    };
-  }, []);
 
   function getWordCells(r, c, dir) {
     let sr = r, sc = c;
@@ -1025,25 +1017,27 @@ function CrosswordScreen({ onBack }) {
     <div className="cw-screen">
       {/* Header */}
       <div className="cw-header">
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
-        <span style={{ fontWeight: 700, fontSize: 16 }}>
-          {solved ? '&#127881; Solved!' : 'Crossword'}
+        <button className="btn btn-ghost btn-sm" style={{ color: '#a78bfa' }} onClick={onBack}>{'\u2190'} Back</button>
+        <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 1, background: 'linear-gradient(90deg, #a78bfa, #6c5ce7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          {solved ? '\ud83c\udf89 CRUSHED IT!' : '\ud83e\udde9 CROSSWORD'}
         </span>
-        <button className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: 'var(--text-muted)' }} onClick={handleReset}>Reset</button>
+        <button className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: '#555' }} onClick={handleReset}>Reset</button>
       </div>
+
+      {solved && <div className="cw-solved-banner">{'\ud83c\udf89'} MISSION COMPLETE {'\ud83c\udf89'}</div>}
 
       {/* Clue bar + direction toggle */}
       <div className="cw-clue-bar">
         <div className="cw-clue-text">
           {currentClue
-            ? <><span style={{ fontWeight: 700, color: 'var(--accent)', marginRight: 4 }}>{currentClue.number}{selDir === 'across' ? 'A' : 'D'}.</span>{currentClue.clue}</>
-            : <span style={{ color: 'var(--text-muted)' }}>Tap a cell to begin</span>
+            ? <><span className="cw-clue-num">{currentClue.number}{selDir === 'across' ? 'A' : 'D'}.</span>{currentClue.clue}</>
+            : <span className="cw-clue-placeholder">Tap a cell to begin</span>
           }
         </div>
         {sel && validDirs(sel.r, sel.c).length > 1 && (
-          <button className="btn btn-outline btn-sm" style={{ flexShrink: 0, padding: '5px 10px', fontSize: 12 }}
+          <button style={{ flexShrink: 0, padding: '5px 12px', fontSize: 12, fontWeight: 700, background: 'rgba(167,139,250,0.15)', border: '1px solid #6c5ce7', borderRadius: 6, color: '#a78bfa', cursor: 'pointer' }}
             onClick={() => { const nd = selDir === 'across' ? 'down' : 'across'; setSelDir(nd); setClueTab(nd); }}>
-            {selDir === 'across' ? '&#8597; Down' : '&#8596; Across'}
+            {selDir === 'across' ? '\u2195 Down' : '\u2194 Across'}
           </button>
         )}
       </div>
@@ -1053,8 +1047,8 @@ function CrosswordScreen({ onBack }) {
         <div style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${cw.cols}, ${CELL}px)`,
-          gap: 2, background: '#000', border: '2px solid #000',
-          borderRadius: 6, width: 'fit-content', margin: '0 auto',
+          gap: 2, background: '#0b0b12', border: '2px solid #1e1e30',
+          borderRadius: 8, width: 'fit-content', margin: '0 auto',
         }}>
           {cw.grid.map((row, r) => row.map((cell, c) => {
             const key = `${r},${c}`;
@@ -1063,34 +1057,38 @@ function CrosswordScreen({ onBack }) {
             const ul = userGrid[r][c];
             const ok = checked && cell && ul === cell.letter;
             const bad = checked && cell && ul && ul !== cell.letter;
-            /* BLACK cells = truly black, WHITE cells = bright white */
-            let bg = '#000';
+            let bg = '#0b0b12';
+            let border = 'none';
+            let shadow = 'none';
             if (cell) {
-              if (isSel) bg = '#ffcc00';
-              else if (isHi) bg = '#a3d5ff';
-              else if (ok) bg = '#4ade80';
-              else if (bad) bg = '#f87171';
-              else bg = '#ffffff';
+              if (isSel) { bg = '#6c5ce7'; border = '2px solid #a78bfa'; shadow = '0 0 12px rgba(108,92,231,0.6)'; }
+              else if (isHi) { bg = '#1a1040'; border = '1px solid #3d2e6e'; }
+              else if (ok) { bg = '#064e3b'; border = '1px solid #10b981'; }
+              else if (bad) { bg = '#4c0519'; border = '1px solid #f43f5e'; }
+              else { bg = '#1a1a2e'; border = '1px solid #2a2a44'; }
             }
-            const darkText = isSel || isHi || ok || bad;
+            const numColor = isSel ? '#e0d4ff' : isHi ? '#7c6ab8' : '#555';
+            const letterColor = isSel ? '#fff' : isHi ? '#d4c8ff' : ok ? '#34d399' : bad ? '#fb7185' : '#e0e0ff';
             return (
               <div key={key}
                 ref={el => { if (el) cellRefs.current[key] = el; }}
                 onClick={() => handleCellClick(r, c)}
                 style={{ width: CELL, height: CELL, background: bg, position: 'relative',
+                  border, boxShadow: shadow, borderRadius: 3, boxSizing: 'border-box',
                   cursor: cell ? 'pointer' : 'default',
+                  transition: 'background 0.15s, box-shadow 0.15s',
                   WebkitTapHighlightColor: 'transparent', userSelect: 'none' }}
               >
                 {cell && cell.number && (
                   <span style={{ position: 'absolute', top: 1, left: 2, fontSize: Math.max(6, Math.round(CELL * 0.26)), lineHeight: 1,
-                    fontWeight: 800, color: '#333' }}>
+                    fontWeight: 800, color: numColor }}>
                     {cell.number}
                   </span>
                 )}
                 {cell && ul && (
                   <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: Math.max(10, Math.round(CELL * 0.52)), fontWeight: 800, paddingTop: cell.number ? Math.round(CELL * 0.14) : 0,
-                    color: '#111' }}>
+                    color: letterColor }}>
                     {ul}
                   </span>
                 )}
@@ -1102,8 +1100,8 @@ function CrosswordScreen({ onBack }) {
 
       {/* Controls */}
       <div className="cw-controls">
-        <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => setChecked(true)}>Check</button>
-        <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={handleRevealWord} disabled={!sel}>Reveal Word</button>
+        <button style={{ flex: 1, padding: '10px 0', background: 'rgba(108,92,231,0.15)', border: '1px solid #6c5ce7', borderRadius: 8, color: '#a78bfa', fontWeight: 700, fontSize: 14, cursor: 'pointer' }} onClick={() => setChecked(true)}>{'\u2714'} Check</button>
+        <button style={{ flex: 1, padding: '10px 0', background: 'rgba(236,72,153,0.1)', border: '1px solid #ec4899', borderRadius: 8, color: '#f472b6', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: sel ? 1 : 0.4 }} onClick={handleRevealWord} disabled={!sel}>{'\ud83d\udc41'} Reveal</button>
       </div>
 
       {/* Across / Down tabs */}
@@ -1120,26 +1118,11 @@ function CrosswordScreen({ onBack }) {
             <div key={cl.number}
               className={`cw-clue-row${isActive ? ' active' : ''}`}
               onClick={() => handleClueClick(cl.r, cl.c, clueTab)}>
-              <span style={{ fontWeight: 700, marginRight: 4 }}>{cl.number}.</span>{cl.clue}
+              <span style={{ fontWeight: 800, marginRight: 6, color: isActive ? '#a78bfa' : '#666' }}>{cl.number}.</span>{cl.clue}
             </div>
           );
         })}
       </div>
-
-      {/* Floating clue above keyboard (visible when keyboard is open) */}
-      {sel && currentClue && kbHeight > 80 && (
-        <div style={{
-          position: 'fixed', left: 0, right: 0, bottom: kbHeight, zIndex: 999,
-          background: '#1a1a2e', borderTop: '2px solid #ffcc00',
-          padding: '12px 16px', fontSize: 16, fontWeight: 600, color: '#fff',
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.5)',
-        }}>
-          <span style={{ color: '#ffcc00', fontWeight: 800, marginRight: 6 }}>
-            {currentClue.number}{selDir === 'across' ? 'A' : 'D'}.
-          </span>
-          {currentClue.clue}
-        </div>
-      )}
 
       {/* Hidden keyboard input */}
       <input ref={inputRef}
@@ -1229,7 +1212,7 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onCrossword, onAdmin, on
             &#127919; Quiz Mode
           </button>
           <button className="btn btn-outline btn-full btn-lg" onClick={onCrossword}>
-            &#9997; Crossword
+            {'\ud83e\udde9'} Crossword Challenge
           </button>
           <button className="btn btn-ghost btn-full" style={{color:'var(--text-muted)', fontSize:13}} onClick={() => setConfirmReset(true)}>
             &#8635; Reset All Progress
