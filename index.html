@@ -334,7 +334,10 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
     setGraded(true);
     setTimeout(() => {
       if (index + 1 >= cards.length) { setDone(true); }
-      else { setIndex(i => i + 1); setFlipped(false); setHasFlipped(false); setGraded(false); }
+      else {
+        setFlipped(false);
+        setTimeout(() => { setIndex(i => i + 1); setHasFlipped(false); setGraded(false); }, 500);
+      }
     }, 350);
   }
 
