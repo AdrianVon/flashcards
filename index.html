@@ -71,6 +71,8 @@
   .fc-slider { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease; }
   .fc-slider.slide-out { transform: translateX(-110%); opacity: 0; }
   .fc-slider.slide-in { transform: translateX(110%); opacity: 0; transition: none; }
+  .fc-slider.slide-out-right { transform: translateX(110%); opacity: 0; }
+  .fc-slider.slide-in-left { transform: translateX(-110%); opacity: 0; transition: none; }
   .fc-card-wrap { position: relative; width: 100%; padding-top: 62%; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .fc-card-wrap.flipped { transform: rotateY(180deg); }
   .fc-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; padding: 24px; border: 1.5px solid var(--border); user-select: none; }
@@ -325,6 +327,16 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
     }
   }
 
+  function goPrev() {
+    if (index === 0) return;
+    setSlideClass('slide-out-right');
+    setTimeout(() => {
+      setFlipped(false); setIndex(i => i - 1); setHasFlipped(false); setGraded(false);
+      setSlideClass('slide-in-left');
+      requestAnimationFrame(() => requestAnimationFrame(() => setSlideClass('')));
+    }, 350);
+  }
+
   function grade(isCorrect) {
     const quality = isCorrect ? 2 : 0;
     const updated = getNextReview(progress[card.id], quality);
@@ -403,7 +415,10 @@ function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, titl
     <div className="container">
       <div className="study-wrap">
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-          <button className="btn btn-ghost btn-sm" onClick={() => onBack([])}>&#8592; Back</button>
+          <div style={{display:'flex', gap:8, alignItems:'center'}}>
+            <button className="btn btn-ghost btn-sm" onClick={() => onBack([])}>&#8592; Back</button>
+            {index > 0 && <button className="btn btn-ghost btn-sm" onClick={goPrev}>&#9664; Prev</button>}
+          </div>
           <div className="study-stats">
             <span>&#10003; <span className="correct">{sessionStats.correct}</span></span>
             <span>&#10007; <span className="incorrect">{sessionStats.incorrect}</span></span>
