@@ -174,7 +174,7 @@
   .cw-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .cw-clue-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; min-height: 50px; }
   .cw-clue-text { flex: 1; font-size: 13px; line-height: 1.4; }
-  .cw-grid-wrap { overflow: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; height: 44vh; padding: 10px; touch-action: pan-x pan-y pinch-zoom; }
+  .cw-grid-wrap { overflow: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; padding: 10px; touch-action: pan-x pan-y pinch-zoom; }
   .cw-controls { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
   .cw-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .cw-tab { flex: 1; padding: 9px 0; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); -webkit-tap-highlight-color: transparent; }
@@ -861,9 +861,10 @@ function buildCrossword(entries) {
 }
 
 // ─── Crossword Screen ──────────────────────────────────────────────────────────
-const CELL = 38; // big enough to tap — grid scrolls & pinch-zooms
 function CrosswordScreen({ onBack }) {
   const cw = React.useMemo(() => buildCrossword(CW_ENTRIES), []);
+  // Fit entire grid on screen — cells shrink to fit, pinch-zoom to enlarge
+  const CELL = Math.max(16, Math.min(38, Math.floor((window.innerWidth - 24) / cw.cols)));
   const [userGrid, setUserGrid] = useState(() =>
     Array(cw.rows).fill(null).map(() => Array(cw.cols).fill(''))
   );
@@ -1065,14 +1066,14 @@ function CrosswordScreen({ onBack }) {
                   WebkitTapHighlightColor: 'transparent', userSelect: 'none' }}
               >
                 {cell && cell.number && (
-                  <span style={{ position: 'absolute', top: 2, left: 3, fontSize: 10, lineHeight: 1,
+                  <span style={{ position: 'absolute', top: 1, left: 2, fontSize: Math.max(6, Math.round(CELL * 0.26)), lineHeight: 1,
                     fontWeight: 800, color: '#333' }}>
                     {cell.number}
                   </span>
                 )}
                 {cell && ul && (
                   <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 20, fontWeight: 800, paddingTop: cell.number ? 5 : 0,
+                    fontSize: Math.max(10, Math.round(CELL * 0.52)), fontWeight: 800, paddingTop: cell.number ? Math.round(CELL * 0.14) : 0,
                     color: '#111' }}>
                     {ul}
                   </span>
