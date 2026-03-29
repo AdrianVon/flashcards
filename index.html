@@ -1208,6 +1208,11 @@ function HomeScreen({ cards, progress, onStudy, onQuiz, onCrossword, onAdmin, on
           <button className="btn btn-primary btn-full btn-lg" onClick={() => onStudy('all')}>
             &#128218; Study All Cards
           </button>
+          {cards.filter(c => !progress[c.id] || progress[c.id].reps < 1).length > 0 && (
+            <button className="btn btn-full btn-lg" style={{background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.4)', color:'#fca5a5'}} onClick={() => onStudy('weak')}>
+              &#10007; Study Missed ({cards.filter(c => !progress[c.id] || progress[c.id].reps < 1).length})
+            </button>
+          )}
           <button className="btn btn-outline btn-full btn-lg" onClick={onQuiz}>
             &#127919; Quiz Mode
           </button>
@@ -1287,6 +1292,9 @@ function App() {
     let title = 'All Cards';
     if (mode === 'missed') {
       subset = lastMissed;
+      title = 'Missed Cards';
+    } else if (mode === 'weak') {
+      subset = cards.filter(c => !progress[c.id] || progress[c.id].reps < 1);
       title = 'Missed Cards';
     }
     const shuffled = [...subset].sort(() => Math.random() - 0.5);
