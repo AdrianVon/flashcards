@@ -174,14 +174,14 @@
   .cw-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .cw-clue-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; min-height: 50px; }
   .cw-clue-text { flex: 1; font-size: 13px; line-height: 1.4; }
-  .cw-grid-wrap { overflow: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; height: 42vh; padding: 10px; }
+  .cw-grid-wrap { overflow: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; height: 44vh; padding: 10px; }
   .cw-controls { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
   .cw-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .cw-tab { flex: 1; padding: 9px 0; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); -webkit-tap-highlight-color: transparent; }
   .cw-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
   .cw-clue-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .cw-clue-row { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.4; cursor: pointer; color: var(--text-muted); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  .cw-clue-row.active { background: rgba(124,106,247,0.1); color: var(--accent); }
+  .cw-clue-row { padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.4; cursor: pointer; color: var(--text-muted); -webkit-tap-highlight-color: transparent; touch-action: manipulation; min-height: 44px; }
+  .cw-clue-row.active { background: rgba(124,106,247,0.15); color: #a794ff; }
 </style>
 </head>
 <body>
@@ -861,7 +861,7 @@ function buildCrossword(entries) {
 }
 
 // ─── Crossword Screen ──────────────────────────────────────────────────────────
-const CELL = 30; // fixed cell size — grid scrolls
+const CELL = 36; // big enough to tap easily — grid scrolls
 function CrosswordScreen({ onBack }) {
   const cw = React.useMemo(() => buildCrossword(CW_ENTRIES), []);
   const [userGrid, setUserGrid] = useState(() =>
@@ -1036,8 +1036,8 @@ function CrosswordScreen({ onBack }) {
         <div style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${cw.cols}, ${CELL}px)`,
-          gap: 1, background: 'var(--border)', border: '2px solid var(--border)',
-          borderRadius: 4, width: 'fit-content', margin: '0 auto',
+          gap: 2, background: '#000', border: '3px solid #333',
+          borderRadius: 6, width: 'fit-content', margin: '0 auto',
         }}>
           {cw.grid.map((row, r) => row.map((cell, c) => {
             const key = `${r},${c}`;
@@ -1046,13 +1046,13 @@ function CrosswordScreen({ onBack }) {
             const ul = userGrid[r][c];
             const ok = checked && cell && ul === cell.letter;
             const bad = checked && cell && ul && ul !== cell.letter;
-            let bg = '#111';
+            let bg = '#0a0a0e';
             if (cell) {
-              if (isSel) bg = 'var(--accent)';
-              else if (isHi) bg = 'rgba(124,106,247,0.3)';
-              else if (ok) bg = 'rgba(34,197,94,0.22)';
-              else if (bad) bg = 'rgba(239,68,68,0.22)';
-              else bg = 'var(--surface)';
+              if (isSel) bg = '#6c5ce7';
+              else if (isHi) bg = '#2d2670';
+              else if (ok) bg = '#145a32';
+              else if (bad) bg = '#7a1a1a';
+              else bg = '#1e1e2a';
             }
             return (
               <div key={key}
@@ -1063,15 +1063,15 @@ function CrosswordScreen({ onBack }) {
                   WebkitTapHighlightColor: 'transparent', userSelect: 'none', touchAction: 'manipulation' }}
               >
                 {cell && cell.number && (
-                  <span style={{ position: 'absolute', top: 1, left: 2, fontSize: 7, lineHeight: 1,
-                    fontWeight: 700, color: isSel ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>
+                  <span style={{ position: 'absolute', top: 2, left: 3, fontSize: 9, lineHeight: 1,
+                    fontWeight: 800, color: isSel ? '#fff' : isHi ? '#a794ff' : '#888' }}>
                     {cell.number}
                   </span>
                 )}
                 {cell && ul && (
                   <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, fontWeight: 700, paddingTop: cell.number ? 4 : 0,
-                    color: isSel ? 'white' : bad ? 'var(--red)' : ok ? 'var(--green)' : 'var(--text)' }}>
+                    fontSize: 17, fontWeight: 800, paddingTop: cell.number ? 5 : 0,
+                    color: isSel ? '#fff' : bad ? '#ff6b6b' : ok ? '#6bff9e' : '#e8e8f0' }}>
                     {ul}
                   </span>
                 )}
