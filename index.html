@@ -873,9 +873,25 @@ function CrosswordScreen({ onBack }) {
   const [checked, setChecked] = useState(false);
   const [solved, setSolved] = useState(false);
   const [clueTab, setClueTab] = useState('across');
+  const [kbHeight, setKbHeight] = useState(0);
   const inputRef = useRef(null);
   const gridRef = useRef(null);
   const cellRefs = useRef({});
+
+  // Track mobile keyboard height via visualViewport
+  useEffect(() => {
+    if (!window.visualViewport) return;
+    const onVV = () => {
+      const vv = window.visualViewport;
+      setKbHeight(Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    };
+    window.visualViewport.addEventListener('resize', onVV);
+    window.visualViewport.addEventListener('scroll', onVV);
+    return () => {
+      window.visualViewport.removeEventListener('resize', onVV);
+      window.visualViewport.removeEventListener('scroll', onVV);
+    };
+  }, []);
 
   function getWordCells(r, c, dir) {
     let sr = r, sc = c;
@@ -1109,6 +1125,21 @@ function CrosswordScreen({ onBack }) {
           );
         })}
       </div>
+
+      {/* Floating clue above keyboard (visible when keyboard is open) */}
+      {sel && currentClue && kbHeight > 80 && (
+        <div style={{
+          position: 'fixed', left: 0, right: 0, bottom: kbHeight, zIndex: 999,
+          background: '#1a1a2e', borderTop: '2px solid #ffcc00',
+          padding: '12px 16px', fontSize: 16, fontWeight: 600, color: '#fff',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.5)',
+        }}>
+          <span style={{ color: '#ffcc00', fontWeight: 800, marginRight: 6 }}>
+            {currentClue.number}{selDir === 'across' ? 'A' : 'D'}.
+          </span>
+          {currentClue.clue}
+        </div>
+      )}
 
       {/* Hidden keyboard input */}
       <input ref={inputRef}
