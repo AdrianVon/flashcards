@@ -3,1368 +3,856 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Flashcards</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<title>Flashcards | Adrian's Study Hub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0f0f13;
-    --surface: #1a1a24;
-    --surface2: #23232f;
-    --border: #2e2e3e;
-    --text: #e8e8f0;
-    --text-muted: #7878a0;
-    --accent: #7c6af7;
-    --accent-hover: #9081fa;
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --border: #475569;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --accent: #6366f1;
+    --accent2: #818cf8;
     --green: #22c55e;
-    --green-hover: #16a34a;
     --red: #ef4444;
-    --red-hover: #dc2626;
-    --radius: 12px;
-    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --yellow: #eab308;
+    --orange: #f97316;
   }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
-  #root { min-height: 100vh; display: flex; flex-direction: column; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  .container { max-width: 720px; margin: 0 auto; padding: 0 16px; width: 100%; }
+  /* Card flip */
+  .card-container { perspective: 1000px; width: 100%; max-width: 560px; height: 340px; cursor: pointer; margin: 0 auto; }
+  .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
+  .card-inner.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; font-size: 1.25rem; line-height: 1.6; }
+  .card-front { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+  .card-back { background: linear-gradient(135deg, #059669, #10b981); color: white; transform: rotateY(180deg); }
+  .card-label { position: absolute; top: 16px; left: 20px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; }
+  .card-number { position: absolute; top: 16px; right: 20px; font-size: 0.75rem; opacity: 0.7; }
 
-  /* Navbar */
-  .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 0; }
-  .navbar-inner { display: flex; align-items: center; justify-content: space-between; }
-  .navbar-brand { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
-  .navbar-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  /* Swipe */
+  .card-container { touch-action: pan-y; user-select: none; }
 
   /* Buttons */
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; min-height: 44px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
-  .btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
-  .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-  .btn-green { background: var(--green); color: #fff; }
-  .btn-green:hover:not(:disabled) { background: var(--green-hover); }
-  .btn-red { background: var(--red); color: #fff; }
-  .btn-red:hover:not(:disabled) { background: var(--red-hover); }
-  .btn-ghost { background: transparent; color: var(--text-muted); }
-  .btn-ghost:hover:not(:disabled) { color: var(--text); }
-  .btn-sm { padding: 8px 14px; font-size: 13px; min-height: 36px; }
-  .btn-lg { padding: 16px 28px; font-size: 17px; }
-  .btn-full { width: 100%; justify-content: center; }
+  .btn { padding: 10px 20px; border-radius: 10px; border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  .btn:active { transform: translateY(0); }
+  .btn-accent { background: var(--accent); color: white; }
+  .btn-green { background: var(--green); color: white; }
+  .btn-red { background: var(--red); color: white; }
+  .btn-surface { background: var(--surface2); color: var(--text); }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text2); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent2); }
+  .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+  .btn-lg { padding: 14px 28px; font-size: 1rem; }
 
-  /* Cards / Surfaces */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-  .card + .card { margin-top: 12px; }
+  /* Progress bar */
+  .progress-bar { width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
 
-  /* Home screen */
-  .home-hero { text-align: center; padding: 48px 0 32px; }
-  .home-hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
-  .home-hero p { color: var(--text-muted); font-size: 16px; }
-  .home-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
-  .home-stat { display: flex; align-items: center; justify-content: space-between; }
-  .home-stat-label { color: var(--text-muted); font-size: 14px; }
-  .home-stat-value { font-weight: 700; font-size: 18px; }
+  /* Input */
+  .input { width: 100%; padding: 10px 14px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
+  .input:focus { border-color: var(--accent); }
+  .textarea { resize: vertical; min-height: 80px; font-family: inherit; }
 
-  /* Flashcard */
-  .fc-scene { perspective: 1000px; width: 100%; max-width: 560px; margin: 0 auto; overflow: hidden; }
-  .fc-slider { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease; }
-  .fc-slider.slide-out { transform: translateX(-110%); opacity: 0; }
-  .fc-slider.slide-in { transform: translateX(110%); opacity: 0; transition: none; }
-  .fc-slider.slide-out-right { transform: translateX(110%); opacity: 0; }
-  .fc-slider.slide-in-left { transform: translateX(-110%); opacity: 0; transition: none; }
-  .fc-card-wrap { position: relative; width: 100%; padding-top: 62%; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .fc-card-wrap.flipped { transform: rotateY(180deg); }
-  .fc-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; padding: 24px; border: 1.5px solid var(--border); user-select: none; }
-  .fc-front { background: var(--surface); }
-  .fc-back { background: var(--surface2); transform: rotateY(180deg); }
-  .fc-text { font-size: clamp(15px, 4vw, 22px); font-weight: 600; text-align: center; line-height: 1.5; white-space: pre-wrap; }
-  .fc-label { position: absolute; top: 10px; left: 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
-  .fc-counter { position: absolute; top: 10px; right: 14px; font-size: 12px; color: var(--text-muted); }
+  /* Nav */
+  .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--surface2); background: var(--surface); }
+  .nav-title { font-size: 1.1rem; font-weight: 700; }
 
-  /* Study */
-  .study-wrap { padding: 16px 0 32px; }
-  .study-progress-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
-  .study-progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
-  .study-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-  .study-controls .btn-flip { grid-column: 1 / -1; }
-  .study-hint { text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 16px; }
-  .study-stats { display: flex; gap: 16px; justify-content: center; font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
-  .study-stats .correct { color: var(--green); font-weight: 700; }
-  .study-stats .incorrect { color: var(--red); font-weight: 700; }
-
-  /* Session complete */
-  .complete-wrap { text-align: center; padding: 48px 0; }
-  .complete-wrap h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
-  .complete-wrap p { color: var(--text-muted); margin-bottom: 24px; }
-  .complete-stats { display: flex; gap: 32px; justify-content: center; margin-bottom: 32px; }
-  .complete-stat { text-align: center; }
-  .complete-stat-val { font-size: 36px; font-weight: 800; }
-  .complete-stat-lbl { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-  .complete-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .missed-list { margin-top: 24px; text-align: left; }
-  .missed-list h3 { font-size: 14px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .missed-item { background: var(--surface2); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
-  .missed-item .q { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-  .missed-item .a { font-size: 13px; color: var(--text-muted); }
+  /* Animations */
+  @keyframes slideIn { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+  .animate-in { animation: slideIn 0.3s ease-out; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
   /* Quiz */
-  .quiz-wrap { padding: 24px 0; }
-  .quiz-question { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 32px; text-align: center; margin-bottom: 20px; }
-  .quiz-question p { font-size: 20px; font-weight: 600; line-height: 1.5; }
-  .quiz-question small { color: var(--text-muted); font-size: 12px; display: block; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .quiz-choices { display: flex; flex-direction: column; gap: 10px; }
-  .quiz-choice { background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 14px 20px; text-align: left; font-size: 15px; cursor: pointer; transition: all 0.15s; font-weight: 500; color: var(--text); }
-  .quiz-choice:hover:not(:disabled) { border-color: var(--accent); }
-  .quiz-choice.correct { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
-  .quiz-choice.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); color: var(--red); }
-  .quiz-choice:disabled { cursor: default; }
-  .quiz-feedback { text-align: center; margin-top: 16px; font-weight: 700; font-size: 16px; }
-  .quiz-feedback.correct { color: var(--green); }
-  .quiz-feedback.wrong { color: var(--red); }
-  .quiz-next { text-align: center; margin-top: 16px; }
+  .quiz-option { width: 100%; padding: 14px 18px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; color: var(--text); font-size: 0.95rem; cursor: pointer; transition: all 0.15s; text-align: left; }
+  .quiz-option:hover { border-color: var(--accent); background: var(--surface2); }
+  .quiz-option.correct { border-color: var(--green); background: rgba(34,197,94,0.15); }
+  .quiz-option.wrong { border-color: var(--red); background: rgba(239,68,68,0.15); }
 
-  /* Admin */
-  .admin-wrap { padding: 24px 0; }
-  .admin-form { display: flex; flex-direction: column; gap: 12px; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
-  .form-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-input { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 15px; font-family: inherit; transition: border-color 0.15s; resize: vertical; }
-  .form-input:focus { outline: none; border-color: var(--accent); }
-  .card-list { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; }
-  .card-item { background: var(--surface2); border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
-  .card-item-text { flex: 1; min-width: 0; }
-  .card-item-front { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-item-back { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-item-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
 
-  /* Login */
-  .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
-  .login-box { width: 100%; max-width: 360px; }
-  .login-box h2 { font-size: 22px; font-weight: 800; margin-bottom: 20px; }
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.2s; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
 
-  /* Misc */
-  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; }
-  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
-  .badge-accent { background: rgba(124,106,247,0.15); color: var(--accent); }
-  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
-  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
-  .mt-4 { margin-top: 16px; }
-  .mt-8 { margin-top: 32px; }
-  .mb-4 { margin-bottom: 16px; }
-  .text-center { text-align: center; }
-  .text-muted { color: var(--text-muted); }
-  .flex { display: flex; }
-  .gap-2 { gap: 8px; }
-  .items-center { align-items: center; }
-  .justify-between { justify-content: space-between; }
-  .animate-in { animation: fadeUp 0.25s ease; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+  /* Loading spinner */
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2.5px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Confirm modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; max-width: 400px; width: 100%; }
-  .modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-  .modal-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-
-  .tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-  .alert { border-radius: 8px; padding: 12px 16px; font-size: 14px; margin-bottom: 12px; }
-  .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
-  .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
-
-  /* Crossword animations */
-  @keyframes cwPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-  @keyframes cwGlow { 0%, 100% { box-shadow: 0 0 8px rgba(108,92,231,0.3); } 50% { box-shadow: 0 0 20px rgba(108,92,231,0.6); } }
-  @keyframes cwSolvedBg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-  .cw-solved-banner { background: linear-gradient(270deg, #6c5ce7, #ec4899, #a78bfa, #6c5ce7); background-size: 300% 300%; animation: cwSolvedBg 3s ease infinite; padding: 16px; text-align: center; font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255,255,255,0.4); }
-
-  /* Crossword — dark theme, mobile-first */
-  .cw-screen { display: flex; flex-direction: column; min-height: 100vh; background: #0b0b12; }
-  .cw-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #1e1e30; }
-  .cw-clue-bar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; min-height: 60px; background: linear-gradient(135deg, #1a1040 0%, #0d1a3a 100%); border-bottom: 2px solid #6c5ce7; position: sticky; top: 0; z-index: 10; }
-  .cw-clue-text { flex: 1; font-size: 16px; line-height: 1.45; font-weight: 600; color: #f0f0ff; }
-  .cw-clue-num { font-weight: 900; color: #a78bfa; margin-right: 6px; font-size: 17px; }
-  .cw-clue-placeholder { color: #555; font-weight: 400; font-style: italic; }
-  .cw-grid-wrap { padding: 12px; touch-action: pan-x pan-y pinch-zoom; background: #0b0b12; }
-  .cw-controls { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid #1e1e30; }
-  .cw-tabs { display: flex; border-bottom: 1px solid #1e1e30; }
-  .cw-tab { flex: 1; padding: 10px 0; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; -webkit-tap-highlight-color: transparent; }
-  .cw-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
-  .cw-clue-list { }
-  .cw-clue-row { padding: 13px 16px; border-bottom: 1px solid #1a1a28; font-size: 14px; line-height: 1.45; cursor: pointer; color: #777; -webkit-tap-highlight-color: transparent; touch-action: manipulation; min-height: 44px; }
-  .cw-clue-row.active { background: linear-gradient(90deg, rgba(108,92,231,0.15) 0%, transparent 100%); color: #d4c8ff; }
+  @media (max-width: 640px) {
+    .card-container { height: 280px; }
+    .card-face { font-size: 1.05rem; padding: 24px; }
+    .nav { padding: 12px 16px; }
+  }
 </style>
 </head>
 <body>
 <div id="root"></div>
-
 <script type="text/babel">
-const { useState, useEffect, useCallback, useRef } = React;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-// ─── Storage Keys ────────────────────────────────────────────────────────────
+// ============================================================
+// SUPABASE CONFIG
+// ============================================================
+const SUPABASE_URL = "https://pfvbfpyxchglxveyjsge.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmdmJmcHl4Y2hnbHh2ZXlqc2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMTE1NzgsImV4cCI6MjA4NTg4NzU3OH0.-wi-iVu1Pn4t9OKjNElB_enmEXR4rbXcmOSDuAgpAn0";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// SUPABASE HELPERS
+// ============================================================
+async function fetchCards() {
+  const { data, error } = await supabase
+    .from("flashcards")
+    .select("*")
+    .order("id", { ascending: true });
+  if (error) { console.error("Error fetching cards:", error); return []; }
+  return data || [];
+}
+
+async function insertCard(front, back, tags = []) {
+  const { data, error } = await supabase
+    .from("flashcards")
+    .insert([{ front, back, tags }])
+    .select();
+  if (error) { console.error("Error inserting card:", error); return null; }
+  return data?.[0] || null;
+}
+
+async function updateCard(id, front, back) {
+  const { error } = await supabase
+    .from("flashcards")
+    .update({ front, back })
+    .eq("id", id);
+  if (error) { console.error("Error updating card:", error); return false; }
+  return true;
+}
+
+async function deleteCardFromDB(id) {
+  const { error } = await supabase
+    .from("flashcards")
+    .delete()
+    .eq("id", id);
+  if (error) { console.error("Error deleting card:", error); return false; }
+  return true;
+}
+
+async function importCardsToDB(cardsArray) {
+  const { data, error } = await supabase
+    .from("flashcards")
+    .insert(cardsArray.map(c => ({ front: c.front, back: c.back, tags: c.tags || [] })))
+    .select();
+  if (error) { console.error("Error importing cards:", error); return []; }
+  return data || [];
+}
+
+// Admin password - change this!
+const ADMIN_PASSWORD = "admin123";
+
+// ============================================================
+// LOCAL STORAGE HELPERS (progress only)
+// ============================================================
 const STORAGE_KEYS = {
-  cards: 'fc_cards_v1',
-  progress: 'fc_progress_v1',
-  adminToken: 'fc_admin_token',
+  PROGRESS: "fc_progress_v1",
+  ADMIN_AUTH: "fc_admin_auth",
 };
 
-const ADMIN_PASSWORD = 'admin123';
-
-// ─── GitHub Card Sync ─────────────────────────────────────────────────────────
-const REPO = 'AdrianVon/flashcards';
-const CARDS_FILE = 'cards.json';
-const CARDS_RAW_URL = `https://raw.githubusercontent.com/${REPO}/main/${CARDS_FILE}`;
-const GITHUB_API_URL = `https://api.github.com/repos/${REPO}/contents/${CARDS_FILE}`;
-
-async function fetchRemoteCards() {
+function loadFromStorage(key, fallback) {
   try {
-    const r = await fetch(GITHUB_API_URL, {
-      headers: { Accept: 'application/vnd.github.v3+json' },
-      cache: 'no-store'
-    });
-    if (!r.ok) return null;
-    const data = await r.json();
-    const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
-    return JSON.parse(decoded);
-  } catch { return null; }
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : fallback;
+  } catch { return fallback; }
 }
 
-async function pushCardsToGitHub(newCards, token) {
-  const r = await fetch(GITHUB_API_URL, {
-    headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' }
-  });
-  if (!r.ok) throw new Error('Failed to read cards.json from GitHub (status ' + r.status + ')');
-  const file = await r.json();
-  const sha = file.sha;
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(newCards, null, 2))));
-  const put = await fetch(GITHUB_API_URL, {
-    method: 'PUT',
-    headers: { Authorization: 'token ' + token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: 'Update cards via admin panel', content, sha })
-  });
-  if (!put.ok) {
-    const err = await put.json().catch(() => ({}));
-    throw new Error(err.message || 'GitHub API error ' + put.status);
-  }
-}
-
-// ─── Default Cards ────────────────────────────────────────────────────────────
-const DEFAULT_CARDS = [];
-
-// ─── SM-2 Spaced Repetition (simplified) ─────────────────────────────────────
-function getNextReview(prev, quality) {
-  const now = Date.now();
-  if (!prev) {
-    return { interval: quality >= 2 ? 1 : 0, easeFactor: 2.5, nextReview: now, reps: quality >= 2 ? 1 : 0, lastQuality: quality };
-  }
-  let { interval, easeFactor, reps } = prev;
-  if (quality < 2) {
-    interval = 0; reps = 0;
-  } else {
-    if (reps === 0) interval = 1;
-    else if (reps === 1) interval = 6;
-    else interval = Math.round(interval * easeFactor);
-    reps += 1;
-    easeFactor = Math.max(1.3, easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  }
-  return { interval, easeFactor, nextReview: now + interval * 86400000, reps, lastQuality: quality };
-}
-
-function isDue(progressEntry) {
-  if (!progressEntry) return true;
-  return Date.now() >= progressEntry.nextReview;
-}
-
-// ─── Local Storage Helpers ────────────────────────────────────────────────────
-function loadJSON(key, fallback) {
-  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
-}
-function saveJSON(key, value) {
+function saveToStorage(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
-// ─── Flashcard Component ──────────────────────────────────────────────────────
+// ============================================================
+// SPACED REPETITION (SM-2 simplified)
+// ============================================================
+function getNextReview(card, quality) {
+  const now = Date.now();
+  const prev = card || { interval: 0, ease: 2.5, reps: 0, nextReview: now };
+  let { interval, ease, reps } = prev;
+
+  if (quality < 2) {
+    reps = 0;
+    interval = 1;
+  } else {
+    if (reps === 0) interval = 1;
+    else if (reps === 1) interval = 6;
+    else interval = Math.round(interval * ease);
+    reps++;
+  }
+
+  ease = Math.max(1.3, ease + (0.1 - (3 - quality) * (0.08 + (3 - quality) * 0.02)));
+
+  if (quality === 3) interval = Math.round(interval * 1.3);
+  if (quality === 1) interval = Math.max(1, Math.round(interval * 0.6));
+
+  const nextReview = now + interval * 60 * 1000;
+  return { interval, ease, reps, nextReview, lastReview: now, lastQuality: quality };
+}
+
+// ============================================================
+// COMPONENTS
+// ============================================================
+
+// --- Flashcard ---
 function Flashcard({ card, index, total, flipped, onFlip }) {
   return (
-    <div className="fc-scene">
-      <div className={`fc-card-wrap${flipped ? ' flipped' : ''}`} onClick={onFlip}>
-        <div className="fc-face fc-front">
-          <span className="fc-label">Question</span>
-          <span className="fc-counter">{index + 1} / {total}</span>
-          <p className="fc-text">{card.front}</p>
+    <div className="card-container" onClick={onFlip}>
+      <div className={`card-inner ${flipped ? 'flipped' : ''}`}>
+        <div className="card-face card-front">
+          <div className="card-label">Question</div>
+          <div className="card-number">{index + 1} / {total}</div>
+          <div style={{fontSize: card.front.length > 100 ? '1rem' : '1.25rem'}}>{card.front}</div>
+          <div style={{position:'absolute', bottom:16, fontSize:'0.7rem', opacity:0.6}}>Tap to reveal answer</div>
         </div>
-        <div className="fc-face fc-back">
-          <span className="fc-label">Answer</span>
-          <span className="fc-counter">{index + 1} / {total}</span>
-          <p className="fc-text">{card.back}</p>
+        <div className="card-face card-back">
+          <div className="card-label">Answer</div>
+          <div className="card-number">{index + 1} / {total}</div>
+          <div style={{fontSize: card.back.length > 100 ? '1rem' : '1.25rem'}}>{card.back}</div>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Study Screen ─────────────────────────────────────────────────────────────
+// --- Home Screen ---
+function HomeScreen({ cards, progress, onStartStudy, onStartMissed, onStartQuiz, onStartSpaced, onAdmin, loading }) {
+  const totalCards = cards.length;
+  const studied = Object.keys(progress).filter(id => progress[id]?.lastReview).length;
+  const mastered = Object.keys(progress).filter(id => progress[id]?.reps >= 3).length;
+  const missed = Object.keys(progress).filter(id => progress[id]?.lastQuality < 2).length;
+  const dueForReview = cards.filter(c => {
+    const p = progress[c.id];
+    return p && p.nextReview && p.nextReview <= Date.now();
+  }).length;
+
+  return (
+    <div className="animate-in" style={{padding:'24px', maxWidth:600, margin:'0 auto'}}>
+      <div style={{textAlign:'center', marginBottom:32}}>
+        <div style={{fontSize:'2.5rem', marginBottom:8}}>ð</div>
+        <h1 style={{fontSize:'1.5rem', fontWeight:800, marginBottom:4}}>Flashcards</h1>
+        <p style={{color:'var(--text2)', fontSize:'0.9rem'}}>Study smarter, not harder</p>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12, marginBottom:28}}>
+        {[
+          {label:'Total Cards', value: totalCards, color:'var(--accent)'},
+          {label:'Studied', value: studied, color:'var(--green)'},
+          {label:'Mastered', value: mastered, color:'var(--yellow)'},
+          {label:'Due for Review', value: dueForReview, color:'var(--orange)'},
+        ].map(s => (
+          <div key={s.label} style={{background:'var(--surface)', borderRadius:12, padding:'16px 18px', border:'1px solid var(--surface2)'}}>
+            <div style={{fontSize:'1.4rem', fontWeight:700, color:s.color}}>{s.value}</div>
+            <div style={{fontSize:'0.75rem', color:'var(--text2)', marginTop:2}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{textAlign:'center', padding:40, color:'var(--text2)'}}>
+          <div className="spinner" style={{marginBottom:12}} />
+          <p>Loading cards...</p>
+        </div>
+      ) : totalCards === 0 ? (
+        <div style={{textAlign:'center', padding:40, color:'var(--text2)'}}>
+          <p style={{marginBottom:12}}>No flashcards yet!</p>
+          <p style={{fontSize:'0.85rem'}}>Sign into the admin panel to add cards.</p>
+        </div>
+      ) : (
+        <div style={{display:'flex', flexDirection:'column', gap:10}}>
+          <button className="btn btn-accent btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={() => onStartStudy('all')}>
+            Study All Cards ({totalCards})
+          </button>
+
+          {dueForReview > 0 && (
+            <button className="btn btn-surface btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={onStartSpaced}>
+              Spaced Review ({dueForReview} due)
+            </button>
+          )}
+
+          {missed > 0 && (
+            <button className="btn btn-lg" style={{width:'100%', justifyContent:'center', background:'var(--red)', color:'white'}} onClick={onStartMissed}>
+              Review Missed Cards ({missed})
+            </button>
+          )}
+
+          <button className="btn btn-outline btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={onStartQuiz}>
+            Quiz Mode
+          </button>
+
+          <button className="btn btn-outline btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={() => onStartStudy('shuffle')}>
+            Shuffle & Study
+          </button>
+        </div>
+      )}
+
+      <button
+        className="btn btn-outline btn-sm"
+        style={{margin:'28px auto 0', display:'block'}}
+        onClick={onAdmin}
+      >
+        Admin Panel
+      </button>
+    </div>
+  );
+}
+
+// --- Study Screen ---
 function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, title }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [hasFlipped, setHasFlipped] = useState(false);
   const [graded, setGraded] = useState(false);
-  const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0 });
+  const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, total: cards.length });
   const [missedCards, setMissedCards] = useState([]);
   const [done, setDone] = useState(false);
-  const [showMissed, setShowMissed] = useState(false);
-  const [slideClass, setSlideClass] = useState('');
+  const [showMissedList, setShowMissedList] = useState(false);
 
   const card = cards[index];
-  const pct = Math.round((index / cards.length) * 100);
-
-  function handleFlip() {
-    if (!graded) {
-      setFlipped(f => !f);
-      setHasFlipped(true);
-    }
-  }
-
-  function goPrev() {
-    if (index === 0) return;
-    setSlideClass('slide-out-right');
-    setTimeout(() => {
-      setFlipped(false); setIndex(i => i - 1); setHasFlipped(false); setGraded(false);
-      setSlideClass('slide-in-left');
-      requestAnimationFrame(() => requestAnimationFrame(() => setSlideClass('')));
-    }, 350);
-  }
 
   function grade(isCorrect) {
     const quality = isCorrect ? 2 : 0;
     const updated = getNextReview(progress[card.id], quality);
-    setProgress(prev => ({ ...prev, [card.id]: updated }));
+    const newProgress = { ...progress, [card.id]: updated };
+    setProgress(newProgress);
+    setGraded(true);
+
     if (isCorrect) {
       setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
     } else {
       setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
       setMissedCards(prev => [...prev, card]);
     }
-    setGraded(true);
+
     setTimeout(() => {
-      if (index + 1 >= cards.length) { setDone(true); }
-      else {
-        // Slide current card out to the left
-        setSlideClass('slide-out');
-        setTimeout(() => {
-          // Swap card while offscreen, position new card to the right
-          setFlipped(false); setIndex(i => i + 1); setHasFlipped(false); setGraded(false);
-          setSlideClass('slide-in');
-          // Trigger reflow then animate in from right
-          requestAnimationFrame(() => requestAnimationFrame(() => setSlideClass('')));
-        }, 350);
+      if (index < cards.length - 1) {
+        setIndex(index + 1);
+        setFlipped(false);
+        setGraded(false);
+      } else {
+        setDone(true);
       }
-    }, 300);
+    }, 400);
   }
 
   if (done) {
+    const pct = cards.length > 0 ? Math.round((sessionStats.correct / cards.length) * 100) : 0;
     return (
-      <div className="container">
-        <div className="complete-wrap animate-in">
-          <div style={{fontSize:52, marginBottom:12}}>{String.fromCodePoint(0x1F389)}</div>
-          <h2>Session Complete!</h2>
-          <p>{title || 'All cards reviewed.'}</p>
-          <div className="complete-stats">
-            <div className="complete-stat">
-              <div className="complete-stat-val" style={{color:'var(--green)'}}>{sessionStats.correct}</div>
-              <div className="complete-stat-lbl">Correct</div>
-            </div>
-            <div className="complete-stat">
-              <div className="complete-stat-val" style={{color:'var(--red)'}}>{sessionStats.incorrect}</div>
-              <div className="complete-stat-lbl">Incorrect</div>
-            </div>
-            <div className="complete-stat">
-              <div className="complete-stat-val">{cards.length}</div>
-              <div className="complete-stat-lbl">Total</div>
-            </div>
-          </div>
-          <div className="complete-actions">
-            {missedCards.length > 0 && (
-              <button className="btn btn-red btn-lg" onClick={() => onStartSubset(missedCards, 'Missed Cards')}>
-                Study Missed ({missedCards.length})
-              </button>
-            )}
-            <button className="btn btn-primary btn-lg" onClick={() => onBack(missedCards)}>Home</button>
-          </div>
-          {missedCards.length > 0 && (
-            <div className="missed-list mt-8">
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowMissed(s => !s)} style={{marginBottom:12}}>
-                {showMissed ? '\u25b2 Hide' : '\u25bc Show'} missed cards
-              </button>
-              {showMissed && missedCards.map((c, i) => (
-                <div key={c.id + i} className="missed-item animate-in">
-                  <div className="q">Q: {c.front}</div>
-                  <div className="a">A: {c.back}</div>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className="animate-in" style={{padding:24, maxWidth:540, margin:'0 auto', textAlign:'center'}}>
+        <div style={{fontSize:'3rem', marginBottom:16}}>{pct >= 80 ? 'ð' : pct >= 50 ? 'ð' : 'ðª'}</div>
+        <h2 style={{marginBottom:8}}>Session Complete!</h2>
+        <p style={{color:'var(--text2)', marginBottom:24}}>{title}</p>
+        <div style={{display:'flex', justifyContent:'center', gap:24, marginBottom:28}}>
+          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--green)'}}>{sessionStats.correct}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Correct</div></div>
+          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--red)'}}>{sessionStats.incorrect}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Missed</div></div>
+          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--accent)'}}>{pct}%</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Score</div></div>
         </div>
+
+        {missedCards.length > 0 && (
+          <div style={{marginBottom:20}}>
+            <button
+              className="btn btn-lg"
+              style={{width:'100%', justifyContent:'center', background:'var(--red)', color:'white', marginBottom:10}}
+              onClick={() => onStartSubset(missedCards, 'Reviewing Missed Cards')}
+            >
+              Study Missed Cards ({missedCards.length})
+            </button>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setShowMissedList(!showMissedList)}
+            >
+              {showMissedList ? 'Hide' : 'View'} Missed Cards
+            </button>
+
+            {showMissedList && (
+              <div style={{marginTop:14, textAlign:'left'}}>
+                {missedCards.map((mc, i) => (
+                  <div key={mc.id} style={{background:'var(--surface)', border:'1px solid var(--surface2)', borderRadius:10, padding:'12px 16px', marginBottom:8}}>
+                    <div style={{fontSize:'0.8rem', color:'var(--red)', marginBottom:4}}>Missed #{i + 1}</div>
+                    <div style={{fontSize:'0.9rem', fontWeight:600, marginBottom:4}}>{mc.front}</div>
+                    <div style={{fontSize:'0.85rem', color:'var(--text2)'}}>{mc.back}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <button className="btn btn-accent btn-lg" onClick={onBack}>Back to Home</button>
       </div>
     );
   }
 
+  if (!card) return <div style={{padding:24, textAlign:'center'}}>No cards to study.<br/><button className="btn btn-accent" style={{marginTop:16}} onClick={onBack}>Back</button></div>;
+
+  const progressPct = ((index) / cards.length) * 100;
+
   return (
-    <div className="container">
-      <div className="study-wrap">
-        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-          <div style={{display:'flex', gap:8, alignItems:'center'}}>
-            <button className="btn btn-ghost btn-sm" onClick={() => onBack([])}>&#8592; Back</button>
-            {index > 0 && <button className="btn btn-ghost btn-sm" onClick={goPrev}>&#9664; Prev</button>}
-          </div>
-          <div className="study-stats">
-            <span>&#10003; <span className="correct">{sessionStats.correct}</span></span>
-            <span>&#10007; <span className="incorrect">{sessionStats.incorrect}</span></span>
-          </div>
-        </div>
-        <div className="study-progress-bar">
-          <div className="study-progress-fill" style={{width: pct + '%'}} />
-        </div>
-        <div className={`fc-slider ${slideClass}`}>
-          <Flashcard
-            card={card}
-            index={index}
-            total={cards.length}
-            flipped={flipped}
-            onFlip={handleFlip}
-          />
-        </div>
-        {!hasFlipped && !graded && (
-          <p className="study-hint animate-in">Tap card to reveal answer</p>
-        )}
-        {hasFlipped && !graded && (
-          <div className="study-controls animate-in">
-            <button className="btn btn-outline btn-lg btn-flip" style={{justifyContent:'center'}} onClick={handleFlip}>
-              {flipped ? 'Show Question' : 'Show Answer'}
-            </button>
-            <button className="btn btn-red btn-lg" style={{justifyContent:'center'}} onClick={() => grade(false)}>&#10007; Incorrect</button>
-            <button className="btn btn-green btn-lg" style={{justifyContent:'center'}} onClick={() => grade(true)}>&#10003; Correct</button>
-          </div>
-        )}
+    <div className="animate-in" style={{padding:24, maxWidth:600, margin:'0 auto'}}>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
+        <button className="btn btn-outline btn-sm" onClick={onBack}>â Back</button>
+        <span style={{fontSize:'0.8rem', color:'var(--text2)'}}>{title}</span>
       </div>
+
+      <div className="progress-bar" style={{marginBottom:24}}>
+        <div className="progress-fill" style={{width: progressPct + '%', background:'var(--accent)'}} />
+      </div>
+
+      <Flashcard card={card} index={index} total={cards.length} flipped={flipped} onFlip={() => { if (!graded) setFlipped(f => !f); }} />
+
+      {flipped && !graded && (
+        <div className="animate-in" style={{display:'flex', justifyContent:'center', gap:12, marginTop:20, flexWrap:'wrap'}}>
+          <button className="btn btn-outline btn-lg" style={{minWidth:80, justifyContent:'center'}} onClick={() => setFlipped(false)}>Flip</button>
+          <button className="btn btn-red btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(false)}>Incorrect</button>
+          <button className="btn btn-green btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(true)}>Correct</button>
+        </div>
+      )}
+
+      {!flipped && (
+        <div style={{textAlign:'center', marginTop:20}}>
+          <button className="btn btn-accent btn-lg" onClick={() => setFlipped(true)}>Flip</button>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Quiz Screen ──────────────────────────────────────────────────────────────
-function QuizScreen({ cards, onBack }) {
+// --- Quiz Mode ---
+function QuizScreen({ cards, progress, setProgress, onBack }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(null);
-  const [score, setScore] = useState(0);
+  const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0 });
   const [done, setDone] = useState(false);
+  const [options, setOptions] = useState([]);
 
   const card = cards[index];
 
-  const choices = React.useMemo(() => {
-    const others = cards.filter(c => c.id !== card.id).map(c => c.back);
-    const shuffled = others.sort(() => Math.random() - 0.5).slice(0, 3);
-    return [...shuffled, card.back].sort(() => Math.random() - 0.5);
-  }, [index, cards]);
+  useEffect(() => {
+    if (card && cards.length >= 2) {
+      const wrongCards = cards.filter(c => c.id !== card.id);
+      const shuffledWrong = wrongCards.sort(() => Math.random() - 0.5).slice(0, 3);
+      const allOptions = [{ text: card.back, correct: true }, ...shuffledWrong.map(c => ({ text: c.back, correct: false }))];
+      setOptions(allOptions.sort(() => Math.random() - 0.5));
+    }
+  }, [index, card]);
 
-  function pick(choice) {
+  function handleSelect(opt, idx) {
     if (selected !== null) return;
-    setSelected(choice);
-    if (choice === card.back) setScore(s => s + 1);
-  }
+    setSelected(idx);
 
-  function next() {
-    if (index + 1 >= cards.length) { setDone(true); }
-    else { setIndex(i => i + 1); setSelected(null); }
-  }
+    const quality = opt.correct ? 2 : 0;
+    const updated = getNextReview(progress[card.id], quality);
+    setProgress(prev => ({ ...prev, [card.id]: updated }));
 
-  if (cards.length < 4) {
-    return (
-      <div className="container">
-        <div className="complete-wrap">
-          <p className="text-muted">Quiz mode needs at least 4 cards.</p>
-          <button className="btn btn-primary mt-4" onClick={onBack}>Back</button>
-        </div>
-      </div>
-    );
+    if (opt.correct) {
+      setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
+    } else {
+      setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
+    }
+
+    setTimeout(() => {
+      if (index < cards.length - 1) {
+        setIndex(index + 1);
+        setSelected(null);
+      } else {
+        setDone(true);
+      }
+    }, 1200);
   }
 
   if (done) {
-    const pct = Math.round((score / cards.length) * 100);
+    const pct = cards.length > 0 ? Math.round((sessionStats.correct / cards.length) * 100) : 0;
     return (
-      <div className="container">
-        <div className="complete-wrap animate-in">
-          <div style={{fontSize:48, marginBottom:12}}>{pct >= 70 ? String.fromCodePoint(0x1F3C6) : String.fromCodePoint(0x1F4DD)}</div>
-          <h2>Quiz Complete!</h2>
-          <p>You scored {score} / {cards.length} ({pct}%)</p>
-          <div className="complete-actions mt-4">
-            <button className="btn btn-primary btn-lg" onClick={onBack}>Home</button>
-          </div>
+      <div className="animate-in" style={{padding:24, maxWidth:500, margin:'0 auto', textAlign:'center'}}>
+        <div style={{fontSize:'3rem', marginBottom:16}}>{pct >= 80 ? 'ð' : pct >= 50 ? 'ð' : 'ð'}</div>
+        <h2 style={{marginBottom:8}}>Quiz Complete!</h2>
+        <div style={{display:'flex', justifyContent:'center', gap:24, marginBottom:28}}>
+          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--green)'}}>{sessionStats.correct}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Correct</div></div>
+          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--red)'}}>{sessionStats.incorrect}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Wrong</div></div>
+          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--accent)'}}>{pct}%</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Score</div></div>
+        </div>
+        <button className="btn btn-accent btn-lg" onClick={onBack}>Back to Home</button>
+      </div>
+    );
+  }
+
+  if (!card || cards.length < 2) {
+    return (
+      <div style={{padding:24, textAlign:'center'}}>
+        <p>Need at least 2 cards for quiz mode.</p>
+        <button className="btn btn-accent" style={{marginTop:16}} onClick={onBack}>Back</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-in" style={{padding:24, maxWidth:560, margin:'0 auto'}}>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
+        <button className="btn btn-outline btn-sm" onClick={onBack}>â Back</button>
+        <span style={{fontSize:'0.8rem', color:'var(--text2)'}}>Quiz Mode</span>
+      </div>
+
+      <div className="progress-bar" style={{marginBottom:24}}>
+        <div className="progress-fill" style={{width: ((index) / cards.length) * 100 + '%', background:'var(--accent)'}} />
+      </div>
+
+      <div style={{background:'var(--surface)', borderRadius:16, padding:'28px 24px', border:'1px solid var(--surface2)', marginBottom:20, textAlign:'center'}}>
+        <div style={{fontSize:'0.7rem', color:'var(--text2)', textTransform:'uppercase', letterSpacing:2, marginBottom:12}}>Question {index + 1} of {cards.length}</div>
+        <div style={{fontSize:'1.15rem', lineHeight:1.6}}>{card.front}</div>
+      </div>
+
+      <div style={{display:'flex', flexDirection:'column', gap:10}}>
+        {options.map((opt, i) => (
+          <button
+            key={i}
+            className={`quiz-option ${selected !== null ? (opt.correct ? 'correct' : i === selected ? 'wrong' : '') : ''}`}
+            onClick={() => handleSelect(opt, i)}
+            disabled={selected !== null}
+          >
+            <span style={{marginRight:10, opacity:0.5, fontWeight:700}}>{String.fromCharCode(65 + i)}.</span>
+            {opt.text}
+          </button>
+        ))}
+      </div>
+
+      {selected !== null && (
+        <div className="animate-in" style={{textAlign:'center', marginTop:14, fontSize:'0.85rem', color: options[selected]?.correct ? 'var(--green)' : 'var(--red)'}}>
+          {options[selected]?.correct ? 'â Correct!' : `â The answer was: ${card.back}`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Admin Panel ---
+function AdminPanel({ cards, setCards, onBack, refreshCards }) {
+  const [authed, setAuthed] = useState(() => loadFromStorage(STORAGE_KEYS.ADMIN_AUTH, false));
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [editingCard, setEditingCard] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newFront, setNewFront] = useState('');
+  const [newBack, setNewBack] = useState('');
+  const [importText, setImportText] = useState('');
+  const [showImport, setShowImport] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  function login() {
+    if (password === ADMIN_PASSWORD) {
+      setAuthed(true);
+      saveToStorage(STORAGE_KEYS.ADMIN_AUTH, true);
+      setError('');
+    } else {
+      setError('Wrong password');
+    }
+  }
+
+  function logout() {
+    setAuthed(false);
+    saveToStorage(STORAGE_KEYS.ADMIN_AUTH, false);
+  }
+
+  async function addCard() {
+    if (!newFront.trim() || !newBack.trim()) return;
+    setSaving(true);
+    const newCard = await insertCard(newFront.trim(), newBack.trim());
+    if (newCard) {
+      setCards(prev => [...prev, newCard]);
+      setNewFront('');
+      setNewBack('');
+      setShowAdd(false);
+    } else {
+      setError('Failed to add card. Check your Supabase connection.');
+      setTimeout(() => setError(''), 3000);
+    }
+    setSaving(false);
+  }
+
+  async function handleDelete(id) {
+    setSaving(true);
+    const ok = await deleteCardFromDB(id);
+    if (ok) {
+      setCards(prev => prev.filter(c => c.id !== id));
+    } else {
+      setError('Failed to delete card.');
+      setTimeout(() => setError(''), 3000);
+    }
+    setSaving(false);
+  }
+
+  async function saveEdit() {
+    if (!editingCard) return;
+    setSaving(true);
+    const ok = await updateCard(editingCard.id, editingCard.front, editingCard.back);
+    if (ok) {
+      setCards(prev => prev.map(c => c.id === editingCard.id ? editingCard : c));
+      setEditingCard(null);
+    } else {
+      setError('Failed to save changes.');
+      setTimeout(() => setError(''), 3000);
+    }
+    setSaving(false);
+  }
+
+  async function handleImport() {
+    try {
+      const data = JSON.parse(importText);
+      if (Array.isArray(data) && data.length > 0) {
+        setSaving(true);
+        const toImport = data.map(c => ({
+          front: c.front || c.question || '',
+          back: c.back || c.answer || '',
+          tags: c.tags || [],
+        }));
+        const imported = await importCardsToDB(toImport);
+        if (imported.length > 0) {
+          setCards(prev => [...prev, ...imported]);
+          setImportText('');
+          setShowImport(false);
+        } else {
+          setError('Failed to import cards.');
+          setTimeout(() => setError(''), 3000);
+        }
+        setSaving(false);
+      }
+    } catch { setError('Invalid JSON format'); setTimeout(() => setError(''), 3000); }
+  }
+
+  if (!authed) {
+    return (
+      <div className="animate-in" style={{padding:24, maxWidth:400, margin:'60px auto', textAlign:'center'}}>
+        <div style={{fontSize:'2rem', marginBottom:12}}>ð</div>
+        <h2 style={{marginBottom:16}}>Admin Login</h2>
+        <input
+          className="input"
+          type="password"
+          placeholder="Enter admin password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && login()}
+          style={{marginBottom:10}}
+        />
+        {error && <div style={{color:'var(--red)', fontSize:'0.85rem', marginBottom:10}}>{error}</div>}
+        <div style={{display:'flex', gap:8, justifyContent:'center'}}>
+          <button className="btn btn-outline" onClick={onBack}>Cancel</button>
+          <button className="btn btn-accent" onClick={login}>Sign In</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <div className="quiz-wrap">
-        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
-          <span className="text-muted" style={{fontSize:14}}>Score: {score} / {index}</span>
+    <div className="animate-in" style={{padding:24, maxWidth:700, margin:'0 auto'}}>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
+        <div style={{display:'flex', alignItems:'center', gap:12}}>
+          <button className="btn btn-outline btn-sm" onClick={onBack}>â Back</button>
+          <h2 style={{fontSize:'1.2rem'}}>Admin Panel</h2>
         </div>
-        <div className="study-progress-bar mb-4">
-          <div className="study-progress-fill" style={{width: Math.round((index/cards.length)*100) + '%'}} />
+        <div style={{display:'flex', gap:8}}>
+          <button className="btn btn-outline btn-sm" onClick={refreshCards} title="Refresh from database">â» Refresh</button>
+          <button className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
         </div>
-        <div className="quiz-question animate-in">
-          <small>Question {index + 1} of {cards.length}</small>
-          <p>{card.front}</p>
-        </div>
-        <div className="quiz-choices">
-          {choices.map((c, i) => {
-            let cls = 'quiz-choice';
-            if (selected !== null) {
-              if (c === card.back) cls += ' correct';
-              else if (c === selected) cls += ' wrong';
-            }
-            return (
-              <button key={i} className={cls} onClick={() => pick(c)} disabled={selected !== null}>
-                {c}
-              </button>
-            );
-          })}
-        </div>
-        {selected !== null && (
-          <>
-            <div className={`quiz-feedback ${selected === card.back ? 'correct' : 'wrong'} animate-in`}>
-              {selected === card.back ? '&#10003; Correct!' : '&#10007; Incorrect'}
+      </div>
+
+      {/* Action bar */}
+      <div style={{display:'flex', gap:8, marginBottom:20, flexWrap:'wrap'}}>
+        <button className="btn btn-accent btn-sm" onClick={() => setShowAdd(true)}>+ Add Card</button>
+        <button className="btn btn-surface btn-sm" onClick={() => setShowImport(true)}>Import JSON</button>
+        <button className="btn btn-surface btn-sm" onClick={() => setShowExport(true)}>Export JSON</button>
+      </div>
+
+      {error && <div style={{color:'var(--red)', fontSize:'0.85rem', marginBottom:10}}>{error}</div>}
+      {saving && <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10, fontSize:'0.85rem', color:'var(--text2)'}}><div className="spinner" /> Saving...</div>}
+
+      {/* Add Card Modal */}
+      {showAdd && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowAdd(false)}>
+          <div className="modal">
+            <h3 style={{marginBottom:16}}>Add New Card</h3>
+            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Front (Question)</label>
+            <textarea className="input textarea" value={newFront} onChange={e => setNewFront(e.target.value)} placeholder="Enter the question..." style={{marginBottom:12}} />
+            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Back (Answer)</label>
+            <textarea className="input textarea" value={newBack} onChange={e => setNewBack(e.target.value)} placeholder="Enter the answer..." style={{marginBottom:16}} />
+            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+              <button className="btn btn-outline btn-sm" onClick={() => setShowAdd(false)}>Cancel</button>
+              <button className="btn btn-accent btn-sm" onClick={addCard} disabled={saving}>{saving ? 'Saving...' : 'Add Card'}</button>
             </div>
-            <div className="quiz-next animate-in">
-              <button className="btn btn-primary" onClick={next}>
-                {index + 1 >= cards.length ? 'See Results' : 'Next &#8594;'}
-              </button>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImport && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowImport(false)}>
+          <div className="modal">
+            <h3 style={{marginBottom:8}}>Import Cards</h3>
+            <p style={{fontSize:'0.8rem', color:'var(--text2)', marginBottom:12}}>Paste a JSON array of objects with "front" and "back" fields.</p>
+            <textarea className="input textarea" style={{minHeight:120, marginBottom:12}} value={importText} onChange={e => setImportText(e.target.value)} placeholder='[{"front":"Q1","back":"A1"}]' />
+            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+              <button className="btn btn-outline btn-sm" onClick={() => setShowImport(false)}>Cancel</button>
+              <button className="btn btn-accent btn-sm" onClick={handleImport} disabled={saving}>{saving ? 'Importing...' : 'Import'}</button>
             </div>
-          </>
-        )}
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExport && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowExport(false)}>
+          <div className="modal">
+            <h3 style={{marginBottom:12}}>Export Cards</h3>
+            <textarea className="input textarea" style={{minHeight:150, fontFamily:'monospace', fontSize:'0.8rem'}} readOnly value={JSON.stringify(cards.map(c => ({front: c.front, back: c.back})), null, 2)} />
+            <div style={{display:'flex', gap:8, justifyContent:'flex-end', marginTop:12}}>
+              <button className="btn btn-outline btn-sm" onClick={() => setShowExport(false)}>Close</button>
+              <button className="btn btn-accent btn-sm" onClick={() => { navigator.clipboard.writeText(JSON.stringify(cards.map(c => ({front: c.front, back: c.back})), null, 2)); }}>Copy</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Card Modal */}
+      {editingCard && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setEditingCard(null)}>
+          <div className="modal">
+            <h3 style={{marginBottom:16}}>Edit Card #{editingCard.id}</h3>
+            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Front (Question)</label>
+            <textarea className="input textarea" value={editingCard.front} onChange={e => setEditingCard({...editingCard, front: e.target.value})} style={{marginBottom:12}} />
+            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Back (Answer)</label>
+            <textarea className="input textarea" value={editingCard.back} onChange={e => setEditingCard({...editingCard, back: e.target.value})} style={{marginBottom:16}} />
+            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+              <button className="btn btn-outline btn-sm" onClick={() => setEditingCard(null)}>Cancel</button>
+              <button className="btn btn-accent btn-sm" onClick={saveEdit} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Card List */}
+      <div style={{display:'flex', flexDirection:'column', gap:8}}>
+        {cards.length === 0 && <div style={{textAlign:'center', padding:32, color:'var(--text2)'}}>No cards yet. Click "Add Card" to get started.</div>}
+        {cards.map((card, i) => (
+          <div key={card.id} style={{background:'var(--surface)', border:'1px solid var(--surface2)', borderRadius:12, padding:'14px 18px', display:'flex', alignItems:'center', gap:12}}>
+            <div style={{fontSize:'0.75rem', color:'var(--text2)', minWidth:24}}>#{card.id}</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{fontSize:'0.9rem', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{card.front}</div>
+              <div style={{fontSize:'0.8rem', color:'var(--text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{card.back}</div>
+            </div>
+            <button className="btn btn-outline btn-sm" onClick={() => setEditingCard({...card})}>Edit</button>
+            <button className="btn btn-sm" style={{background:'transparent', color:'var(--red)', border:'1.5px solid var(--red)'}} onClick={() => handleDelete(card.id)}>Delete</button>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// ─── Admin Panel ──────────────────────────────────────────────────────────────
-function AdminPanel({ cards, setCards, onBack, onLogout }) {
-  const [front, setFront] = useState('');
-  const [back, setBack] = useState('');
-  const [editId, setEditId] = useState(null);
-  const [msg, setMsg] = useState(null);
-  const [confirmReset, setConfirmReset] = useState(false);
-  const [token, setToken] = useState(() => loadJSON(STORAGE_KEYS.adminToken, ''));
-  const [tokenInput, setTokenInput] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  function flash(text, type='success') { setMsg({text, type}); setTimeout(() => setMsg(null), 4000); }
-
-  async function pushCards(newCards) {
-    if (!token) { flash('Set a GitHub token first (see setup below).', 'error'); return false; }
-    setSaving(true);
-    try {
-      await pushCardsToGitHub(newCards, token);
-      setCards(newCards);
-      setSaving(false);
-      return true;
-    } catch(e) {
-      flash('GitHub sync failed: ' + e.message, 'error');
-      setSaving(false);
-      return false;
-    }
-  }
-
-  async function save() {
-    if (!front.trim() || !back.trim()) return flash('Both fields required.', 'error');
-    let newCards;
-    if (editId) {
-      newCards = cards.map(c => c.id === editId ? {...c, front: front.trim(), back: back.trim()} : c);
-    } else {
-      const id = 'card_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-      newCards = [...cards, { id, front: front.trim(), back: back.trim() }];
-    }
-    const ok = await pushCards(newCards);
-    if (ok) {
-      flash(editId ? 'Card updated! Visible to all users.' : 'Card added! Visible to all users.');
-      setFront(''); setBack(''); setEditId(null);
-    }
-  }
-
-  async function del(id) {
-    const newCards = cards.filter(c => c.id !== id);
-    const ok = await pushCards(newCards);
-    if (ok) flash('Card deleted.');
-  }
-
-  async function deleteAll() {
-    const ok = await pushCards([]);
-    if (ok) { setConfirmReset(false); flash('All cards deleted.'); }
-  }
-
-  function startEdit(card) { setEditId(card.id); setFront(card.front); setBack(card.back); }
-  function cancelEdit() { setEditId(null); setFront(''); setBack(''); }
-
-  function saveToken() {
-    const t = tokenInput.trim();
-    if (!t) return;
-    saveJSON(STORAGE_KEYS.adminToken, t);
-    setToken(t);
-    setTokenInput('');
-    flash('GitHub token saved on this device.');
-  }
-
+// --- Reset Progress Confirmation ---
+function ResetConfirm({ onConfirm, onCancel }) {
   return (
-    <div className="container">
-      <div className="admin-wrap">
-        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
-          <h2 style={{fontSize:22, fontWeight:800}}>Admin Panel</h2>
-          <div style={{display:'flex', gap:8}}>
-            <button className="btn btn-ghost btn-sm" onClick={onBack}>&#8592; Back</button>
-            <button className="btn btn-ghost btn-sm" style={{color:'var(--red)'}} onClick={onLogout}>Logout</button>
-          </div>
-        </div>
-        {msg && <div className={`alert alert-${msg.type} animate-in`}>{msg.text}</div>}
-
-        {/* GitHub Token Setup */}
-        <div className="card" style={{marginBottom:16}}>
-          <div className="section-title">GitHub Sync</div>
-          {token ? (
-            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:8}}>
-              <span style={{fontSize:13, color:'var(--green)'}}>&#10003; Token configured &#8212; cards sync to all users</span>
-              <button className="btn btn-ghost btn-sm" style={{color:'var(--red)', fontSize:12}} onClick={() => { saveJSON(STORAGE_KEYS.adminToken, ''); setToken(''); flash('Token removed.'); }}>Remove</button>
-            </div>
-          ) : (
-            <div>
-              <p style={{fontSize:13, color:'var(--text-muted)', marginBottom:10}}>Paste a GitHub Personal Access Token (with <strong>repo</strong> scope) to sync cards across all devices.</p>
-              <div style={{display:'flex', gap:8}}>
-                <input className="form-input" style={{flex:1}} type="password" value={tokenInput} onChange={e => setTokenInput(e.target.value)} placeholder="ghp_..." onKeyDown={e => e.key === 'Enter' && saveToken()} />
-                <button className="btn btn-primary" onClick={saveToken}>Save Token</button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="card">
-          <div className="section-title">{editId ? 'Edit Card' : 'Add Card'}</div>
-          <div className="admin-form">
-            <div className="form-group">
-              <label className="form-label">Question (Front)</label>
-              <textarea className="form-input" rows={3} value={front} onChange={e => setFront(e.target.value)} placeholder="Enter the question..." />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Answer (Back)</label>
-              <textarea className="form-input" rows={3} value={back} onChange={e => setBack(e.target.value)} placeholder="Enter the answer..." />
-            </div>
-            <div style={{display:'flex', gap:8}}>
-              <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving...' : (editId ? 'Save Changes' : 'Add Card')}</button>
-              {editId && <button className="btn btn-outline" onClick={cancelEdit}>Cancel</button>}
-            </div>
-          </div>
-        </div>
-
-        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:24, marginBottom:8}}>
-          <div className="section-title" style={{marginBottom:0}}>All Cards ({cards.length})</div>
-          {cards.length > 0 && (
-            <button className="btn btn-ghost btn-sm" style={{color:'var(--red)'}} onClick={() => setConfirmReset(true)}>
-              Delete All
-            </button>
-          )}
-        </div>
-        {cards.length === 0 && <p className="text-muted" style={{fontSize:14}}>No cards yet. Add one above.</p>}
-        <div className="card-list">
-          {cards.map(c => (
-            <div key={c.id} className="card-item">
-              <div className="card-item-text">
-                <div className="card-item-front">{c.front}</div>
-                <div className="card-item-back">{c.back}</div>
-              </div>
-              <div className="card-item-actions">
-                <button className="btn btn-outline btn-sm" onClick={() => startEdit(c)}>Edit</button>
-                <button className="btn btn-ghost btn-sm" style={{color:'var(--red)'}} onClick={() => del(c.id)} disabled={saving}>&#10005;</button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {confirmReset && (
-          <div className="modal-overlay">
-            <div className="modal-box animate-in">
-              <h3>Delete All Cards?</h3>
-              <p>This will remove all {cards.length} cards for everyone. This cannot be undone.</p>
-              <div className="modal-actions">
-                <button className="btn btn-outline" onClick={() => setConfirmReset(false)}>Cancel</button>
-                <button className="btn btn-red" onClick={deleteAll} disabled={saving}>{saving ? 'Deleting...' : 'Delete All'}</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Admin Login ──────────────────────────────────────────────────────────────
-function AdminLogin({ onLogin }) {
-  const [pw, setPw] = useState('');
-  const [err, setErr] = useState(false);
-  function attempt() {
-    if (pw === ADMIN_PASSWORD) { onLogin(); }
-    else { setErr(true); setTimeout(() => setErr(false), 2000); }
-  }
-  return (
-    <div className="container">
-      <div className="login-wrap">
-        <div className="login-box animate-in">
-          <h2>Admin Login</h2>
-          {err && <div className="alert alert-error mb-4">Incorrect password.</div>}
-          <div className="form-group mb-4">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={pw}
-              onChange={e => setPw(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && attempt()}
-              placeholder="Enter admin password"
-              autoFocus
-            />
-          </div>
-          <button className="btn btn-primary btn-full" onClick={attempt}>Login</button>
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onCancel()}>
+      <div className="modal" style={{textAlign:'center'}}>
+        <div style={{fontSize:'2rem', marginBottom:12}}>â ï¸</div>
+        <h3 style={{marginBottom:8}}>Reset Your Progress?</h3>
+        <p style={{color:'var(--text2)', fontSize:'0.9rem', marginBottom:20}}>This will clear all your study history and spaced repetition data. Cards will not be affected.</p>
+        <div style={{display:'flex', gap:8, justifyContent:'center'}}>
+          <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
+          <button className="btn btn-red" onClick={onConfirm}>Reset</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Crossword Engine ─────────────────────────────────────────────────────────
-const CW_ENTRIES = [
-  { word: 'SUPERIORITY', clue: 'Air & Space ___ — one of the 5 AF Core Missions' },
-  { word: 'OPERATIONAL', clue: 'Level of warfare that links strategy to tactics' },
-  { word: 'STRATEGIC',   clue: 'Highest level of warfare; integrates national policy' },
-  { word: 'COMBATANT',   clue: '___ ___: joint military org with a broad, continuing mission from 2+ departments' },
-  { word: 'VIGILANCE',   clue: 'Global ___: AF distinctive capability for awareness and intelligence' },
-  { word: 'PRESIDENT',   clue: 'Commander-in-Chief; top of both chains of military authority' },
-  { word: 'TACTICAL',    clue: 'Lowest level of warfare; where battles and engagements occur' },
-  { word: 'MOBILITY',    clue: 'Rapid Global ___: AF capability to move forces anywhere' },
-  { word: 'COHESION',    clue: "Unity and teamwork; one of the 5 C's of the leadership framework" },
-  { word: 'COURAGE',     clue: 'Navy & Marines core value: bravery under pressure' },
-  { word: 'COMMAND',     clue: 'Mission ___ uses delegated authority and disciplined initiative' },
-  { word: 'AIRMEN',      clue: 'AF members who most commonly operate at the lowest warfare level' },
-  { word: 'STRIKE',      clue: 'Global ___: delivers rapid, decisive military force worldwide' },
-  { word: 'POWER',       clue: 'Global ___: ability to project lethal force anywhere' },
-  { word: 'HONOR',       clue: 'Navy & Marines core value: integrity and ethical conduct' },
-  { word: 'REACH',       clue: 'Global ___: AF capability for rapid worldwide movement' },
-  { word: 'JADO',        clue: 'Joint All-Domain Operations (abbr.)' },
-  { word: 'CJCS',        clue: 'Top military advisor to the Commander-in-Chief (abbr.)' },
-  { word: 'ISR',         clue: 'Intelligence, Surveillance, and Reconnaissance (abbr.)' },
-  { word: 'ACE',         clue: 'Agile Combat Employment (abbr.)' },
-];
-
-const CW_SIZE = 25;
-
-function cwCanPlace(grid, word, r, c, dir) {
-  const len = word.length;
-  if (dir === 'across') {
-    if (r < 0 || r >= CW_SIZE || c < 0 || c + len > CW_SIZE) return false;
-    if (c > 0 && grid[r][c - 1]) return false;
-    if (c + len < CW_SIZE && grid[r][c + len]) return false;
-  } else {
-    if (c < 0 || c >= CW_SIZE || r < 0 || r + len > CW_SIZE) return false;
-    if (r > 0 && grid[r - 1][c]) return false;
-    if (r + len < CW_SIZE && grid[r + len][c]) return false;
-  }
-  let hits = 0;
-  for (let i = 0; i < len; i++) {
-    const cr = dir === 'across' ? r : r + i;
-    const cc = dir === 'across' ? c + i : c;
-    const cell = grid[cr][cc];
-    if (cell) {
-      if (cell !== word[i]) return false;
-      hits++;
-    } else {
-      if (dir === 'across') {
-        if (cr > 0 && grid[cr - 1][cc]) return false;
-        if (cr < CW_SIZE - 1 && grid[cr + 1][cc]) return false;
-      } else {
-        if (cc > 0 && grid[cr][cc - 1]) return false;
-        if (cc < CW_SIZE - 1 && grid[cr][cc + 1]) return false;
-      }
-    }
-  }
-  return hits > 0;
-}
-
-function cwPlaceWord(grid, word, r, c, dir) {
-  for (let i = 0; i < word.length; i++) {
-    const cr = dir === 'across' ? r : r + i;
-    const cc = dir === 'across' ? c + i : c;
-    grid[cr][cc] = word[i];
-  }
-}
-
-function buildCrossword(entries) {
-  const N = CW_SIZE;
-  const MID = Math.floor(N / 2);
-  const grid = Array(N).fill(null).map(() => Array(N).fill(null));
-  const sorted = [...entries].sort((a, b) => b.word.length - a.word.length);
-  const placed = [];
-
-  // Place first word horizontally at center
-  const fw = sorted[0];
-  const fwC = MID - Math.floor(fw.word.length / 2);
-  cwPlaceWord(grid, fw.word, MID, fwC, 'across');
-  placed.push({ ...fw, r: MID, c: fwC, dir: 'across' });
-
-  for (let i = 1; i < sorted.length; i++) {
-    const entry = sorted[i];
-    const word = entry.word;
-    let best = null, bestScore = -Infinity;
-
-    for (const pw of placed) {
-      const nd = pw.dir === 'across' ? 'down' : 'across';
-      for (let pi = 0; pi < pw.word.length; pi++) {
-        for (let wi = 0; wi < word.length; wi++) {
-          if (pw.word[pi] !== word[wi]) continue;
-          const r = nd === 'down' ? pw.r - wi : pw.r + pi;
-          const c = nd === 'down' ? pw.c + pi : pw.c - wi;
-          if (!cwCanPlace(grid, word, r, c, nd)) continue;
-          let score = 0;
-          for (let j = 0; j < word.length; j++) {
-            const cr = nd === 'across' ? r : r + j;
-            const cc = nd === 'across' ? c + j : c;
-            if (grid[cr][cc]) score++;
-          }
-          const dist = Math.abs(r - MID) + Math.abs(c - MID);
-          const ws = score * 100 - dist;
-          if (ws > bestScore) { bestScore = ws; best = { r, c, dir: nd }; }
-        }
-      }
-    }
-
-    if (best) {
-      cwPlaceWord(grid, word, best.r, best.c, best.dir);
-      placed.push({ ...entry, ...best });
-    }
-  }
-
-  // Trim to used area
-  let minR = N, maxR = 0, minC = N, maxC = 0;
-  for (let r = 0; r < N; r++)
-    for (let c = 0; c < N; c++)
-      if (grid[r][c]) { minR = Math.min(minR, r); maxR = Math.max(maxR, r); minC = Math.min(minC, c); maxC = Math.max(maxC, c); }
-
-  minR = Math.max(0, minR - 1); maxR = Math.min(N - 1, maxR + 1);
-  minC = Math.max(0, minC - 1); maxC = Math.min(N - 1, maxC + 1);
-  const rows = maxR - minR + 1;
-  const cols = maxC - minC + 1;
-
-  // Build display grid
-  const dg = Array(rows).fill(null).map((_, r) =>
-    Array(cols).fill(null).map((_, c) => {
-      const letter = grid[r + minR][c + minC];
-      return letter ? { letter, number: null } : null;
-    })
-  );
-
-  // Number cells
-  let num = 1;
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (!dg[r][c]) continue;
-      const isAS = (c === 0 || !dg[r][c - 1]) && c + 1 < cols && dg[r][c + 1];
-      const isDS = (r === 0 || !dg[r - 1] || !dg[r - 1][c]) && r + 1 < rows && dg[r + 1][c];
-      if (isAS || isDS) dg[r][c].number = num++;
-    }
-  }
-
-  // Map placed words to clue numbers
-  const across = [], down = [];
-  for (const pw of placed) {
-    const adjR = pw.r - minR, adjC = pw.c - minC;
-    if (adjR < 0 || adjC < 0 || adjR >= rows || adjC >= cols) continue;
-    const cell = dg[adjR][adjC];
-    if (!cell || !cell.number) continue;
-    const obj = { number: cell.number, clue: pw.clue, word: pw.word, r: adjR, c: adjC };
-    if (pw.dir === 'across') across.push(obj);
-    else down.push(obj);
-  }
-  across.sort((a, b) => a.number - b.number);
-  down.sort((a, b) => a.number - b.number);
-
-  return { grid: dg, rows, cols, across, down };
-}
-
-// ─── Crossword Screen ──────────────────────────────────────────────────────────
-function CrosswordScreen({ onBack }) {
-  const cw = React.useMemo(() => buildCrossword(CW_ENTRIES), []);
-  // Fit entire grid on screen — cells shrink to fit, pinch-zoom to enlarge
-  const CELL = Math.max(16, Math.min(38, Math.floor((window.innerWidth - 24) / cw.cols)));
-  const [userGrid, setUserGrid] = useState(() =>
-    Array(cw.rows).fill(null).map(() => Array(cw.cols).fill(''))
-  );
-  const [sel, setSel] = useState(null);
-  const [selDir, setSelDir] = useState('across');
-  const [checked, setChecked] = useState(false);
-  const [solved, setSolved] = useState(false);
-  const [clueTab, setClueTab] = useState('across');
-  const inputRef = useRef(null);
-  const gridRef = useRef(null);
-  const cellRefs = useRef({});
-
-  function getWordCells(r, c, dir) {
-    let sr = r, sc = c;
-    while (true) {
-      const pr = dir === 'down' ? sr - 1 : sr;
-      const pc = dir === 'across' ? sc - 1 : sc;
-      if (pr < 0 || pc < 0 || !cw.grid[pr] || !cw.grid[pr][pc]) break;
-      sr = pr; sc = pc;
-    }
-    const cells = [];
-    let cr = sr, cc = sc;
-    while (cr < cw.rows && cc < cw.cols && cw.grid[cr] && cw.grid[cr][cc]) {
-      cells.push({ r: cr, c: cc });
-      if (dir === 'down') cr++; else cc++;
-    }
-    return cells;
-  }
-
-  function validDirs(r, c) {
-    const hasH = (c > 0 && cw.grid[r][c - 1]) || (c + 1 < cw.cols && cw.grid[r][c + 1]);
-    const hasV = (r > 0 && cw.grid[r - 1] && cw.grid[r - 1][c]) || (r + 1 < cw.rows && cw.grid[r + 1] && cw.grid[r + 1][c]);
-    return [hasH && 'across', hasV && 'down'].filter(Boolean);
-  }
-
-  function scrollCellIntoView(r, c) {
-    const el = cellRefs.current[`${r},${c}`];
-    const grid = gridRef.current;
-    if (!el || !grid) return;
-    const er = el.getBoundingClientRect(), gr = grid.getBoundingClientRect();
-    const pad = 16;
-    if (er.left < gr.left + pad) grid.scrollLeft += er.left - gr.left - pad;
-    else if (er.right > gr.right - pad) grid.scrollLeft += er.right - gr.right + pad;
-    if (er.top < gr.top + pad) grid.scrollTop += er.top - gr.top - pad;
-    else if (er.bottom > gr.bottom - pad) grid.scrollTop += er.bottom - gr.bottom + pad;
-  }
-
-  function handleCellClick(r, c) {
-    if (!cw.grid[r][c]) return;
-    let nd = selDir;
-    if (sel && sel.r === r && sel.c === c) {
-      const vd = validDirs(r, c);
-      if (vd.length > 1) { nd = selDir === 'across' ? 'down' : 'across'; setSelDir(nd); setClueTab(nd); }
-    } else {
-      const vd = validDirs(r, c);
-      if (vd.length === 1) { nd = vd[0]; setSelDir(nd); setClueTab(nd); }
-      else if (!vd.includes(selDir)) { nd = vd[0] || 'across'; setSelDir(nd); setClueTab(nd); }
-      setSel({ r, c });
-    }
-    inputRef.current && inputRef.current.focus();
-    scrollCellIntoView(r, c);
-  }
-
-  function handleClueClick(r, c, dir) {
-    setSel({ r, c }); setSelDir(dir); setClueTab(dir);
-    inputRef.current && inputRef.current.focus();
-    scrollCellIntoView(r, c);
-  }
-
-  function checkSolved(ng) {
-    for (let r = 0; r < cw.rows; r++)
-      for (let c = 0; c < cw.cols; c++)
-        if (cw.grid[r][c] && ng[r][c] !== cw.grid[r][c].letter) return false;
-    return true;
-  }
-
-  function handleKeyDown(e) {
-    if (!sel) return;
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      setChecked(false);
-      const ng = userGrid.map(row => [...row]);
-      if (ng[sel.r][sel.c]) {
-        ng[sel.r][sel.c] = ''; setUserGrid(ng);
-      } else {
-        const cells = getWordCells(sel.r, sel.c, selDir);
-        const idx = cells.findIndex(x => x.r === sel.r && x.c === sel.c);
-        if (idx > 0) { setSel(cells[idx - 1]); scrollCellIntoView(cells[idx-1].r, cells[idx-1].c); }
-      }
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      e.preventDefault(); setSelDir('across'); setClueTab('across');
-    } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault(); setSelDir('down'); setClueTab('down');
-    }
-  }
-
-  function handleInput(e) {
-    if (!sel) return;
-    const raw = e.target.value; e.target.value = '';
-    if (!raw) return;
-    const letter = raw.slice(-1).toUpperCase();
-    if (!/[A-Z]/.test(letter)) return;
-    setChecked(false);
-    const ng = userGrid.map(row => [...row]);
-    ng[sel.r][sel.c] = letter; setUserGrid(ng);
-    if (checkSolved(ng)) setSolved(true);
-    const cells = getWordCells(sel.r, sel.c, selDir);
-    const idx = cells.findIndex(x => x.r === sel.r && x.c === sel.c);
-    let next = null;
-    for (let i = idx + 1; i < cells.length; i++) { if (!ng[cells[i].r][cells[i].c]) { next = cells[i]; break; } }
-    if (!next && idx < cells.length - 1) next = cells[idx + 1];
-    if (next) { setSel(next); scrollCellIntoView(next.r, next.c); }
-  }
-
-  function handleRevealWord() {
-    if (!sel) return;
-    const cells = getWordCells(sel.r, sel.c, selDir);
-    const ng = userGrid.map(row => [...row]);
-    cells.forEach(({ r, c }) => { ng[r][c] = cw.grid[r][c].letter; });
-    setUserGrid(ng); setChecked(false);
-    if (checkSolved(ng)) setSolved(true);
-  }
-
-  function handleReset() {
-    setUserGrid(Array(cw.rows).fill(null).map(() => Array(cw.cols).fill('')));
-    setChecked(false); setSolved(false); setSel(null);
-  }
-
-  const selWordSet = React.useMemo(() =>
-    sel ? new Set(getWordCells(sel.r, sel.c, selDir).map(({ r, c }) => `${r},${c}`)) : new Set()
-  , [sel, selDir]);
-
-  const currentClue = React.useMemo(() => {
-    if (!sel) return null;
-    const cells = getWordCells(sel.r, sel.c, selDir);
-    if (!cells.length) return null;
-    const { r, c } = cells[0];
-    return (selDir === 'across' ? cw.across : cw.down).find(cl => cl.r === r && cl.c === c) || null;
-  }, [sel, selDir]);
-
-  return (
-    <div className="cw-screen">
-      {/* Header */}
-      <div className="cw-header">
-        <button className="btn btn-ghost btn-sm" style={{ color: '#a78bfa' }} onClick={onBack}>{'\u2190'} Back</button>
-        <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 1, background: 'linear-gradient(90deg, #a78bfa, #6c5ce7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          {solved ? '\ud83c\udf89 CRUSHED IT!' : '\ud83e\udde9 CROSSWORD'}
-        </span>
-        <button className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: '#555' }} onClick={handleReset}>Reset</button>
-      </div>
-
-      {solved && <div className="cw-solved-banner">{'\ud83c\udf89'} MISSION COMPLETE {'\ud83c\udf89'}</div>}
-
-      {/* Clue bar + direction toggle */}
-      <div className="cw-clue-bar">
-        <div className="cw-clue-text">
-          {currentClue
-            ? <><span className="cw-clue-num">{currentClue.number}{selDir === 'across' ? 'A' : 'D'}.</span>{currentClue.clue}</>
-            : <span className="cw-clue-placeholder">Tap a cell to begin</span>
-          }
-        </div>
-        {sel && validDirs(sel.r, sel.c).length > 1 && (
-          <button style={{ flexShrink: 0, padding: '5px 12px', fontSize: 12, fontWeight: 700, background: 'rgba(167,139,250,0.15)', border: '1px solid #6c5ce7', borderRadius: 6, color: '#a78bfa', cursor: 'pointer' }}
-            onClick={() => { const nd = selDir === 'across' ? 'down' : 'across'; setSelDir(nd); setClueTab(nd); }}>
-            {selDir === 'across' ? '\u2195 Down' : '\u2194 Across'}
-          </button>
-        )}
-      </div>
-
-      {/* Grid */}
-      <div className="cw-grid-wrap" ref={gridRef}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${cw.cols}, ${CELL}px)`,
-          gap: 2, background: '#0b0b12', border: '2px solid #1e1e30',
-          borderRadius: 8, width: 'fit-content', margin: '0 auto',
-        }}>
-          {cw.grid.map((row, r) => row.map((cell, c) => {
-            const key = `${r},${c}`;
-            const isSel = sel && sel.r === r && sel.c === c;
-            const isHi = selWordSet.has(key);
-            const ul = userGrid[r][c];
-            const ok = checked && cell && ul === cell.letter;
-            const bad = checked && cell && ul && ul !== cell.letter;
-            let bg = '#0b0b12';
-            let border = 'none';
-            let shadow = 'none';
-            if (cell) {
-              if (isSel) { bg = '#6c5ce7'; border = '2px solid #a78bfa'; shadow = '0 0 12px rgba(108,92,231,0.6)'; }
-              else if (isHi) { bg = '#1a1040'; border = '1px solid #3d2e6e'; }
-              else if (ok) { bg = '#064e3b'; border = '1px solid #10b981'; }
-              else if (bad) { bg = '#4c0519'; border = '1px solid #f43f5e'; }
-              else { bg = '#1a1a2e'; border = '1px solid #2a2a44'; }
-            }
-            const numColor = isSel ? '#e0d4ff' : isHi ? '#7c6ab8' : '#555';
-            const letterColor = isSel ? '#fff' : isHi ? '#d4c8ff' : ok ? '#34d399' : bad ? '#fb7185' : '#e0e0ff';
-            return (
-              <div key={key}
-                ref={el => { if (el) cellRefs.current[key] = el; }}
-                onClick={() => handleCellClick(r, c)}
-                style={{ width: CELL, height: CELL, background: bg, position: 'relative',
-                  border, boxShadow: shadow, borderRadius: 3, boxSizing: 'border-box',
-                  cursor: cell ? 'pointer' : 'default',
-                  transition: 'background 0.15s, box-shadow 0.15s',
-                  WebkitTapHighlightColor: 'transparent', userSelect: 'none' }}
-              >
-                {cell && cell.number && (
-                  <span style={{ position: 'absolute', top: 1, left: 2, fontSize: Math.max(6, Math.round(CELL * 0.26)), lineHeight: 1,
-                    fontWeight: 800, color: numColor }}>
-                    {cell.number}
-                  </span>
-                )}
-                {cell && ul && (
-                  <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: Math.max(10, Math.round(CELL * 0.52)), fontWeight: 800, paddingTop: cell.number ? Math.round(CELL * 0.14) : 0,
-                    color: letterColor }}>
-                    {ul}
-                  </span>
-                )}
-              </div>
-            );
-          }))}
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="cw-controls">
-        <button style={{ flex: 1, padding: '10px 0', background: 'rgba(108,92,231,0.15)', border: '1px solid #6c5ce7', borderRadius: 8, color: '#a78bfa', fontWeight: 700, fontSize: 14, cursor: 'pointer' }} onClick={() => setChecked(true)}>{'\u2714'} Check</button>
-        <button style={{ flex: 1, padding: '10px 0', background: 'rgba(236,72,153,0.1)', border: '1px solid #ec4899', borderRadius: 8, color: '#f472b6', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: sel ? 1 : 0.4 }} onClick={handleRevealWord} disabled={!sel}>{'\ud83d\udc41'} Reveal</button>
-      </div>
-
-      {/* Across / Down tabs */}
-      <div className="cw-tabs">
-        <button className={`cw-tab${clueTab === 'across' ? ' active' : ''}`} onClick={() => setClueTab('across')}>Across</button>
-        <button className={`cw-tab${clueTab === 'down' ? ' active' : ''}`} onClick={() => setClueTab('down')}>Down</button>
-      </div>
-
-      {/* Clue list */}
-      <div className="cw-clue-list">
-        {(clueTab === 'across' ? cw.across : cw.down).map(cl => {
-          const isActive = currentClue && currentClue.number === cl.number && selDir === clueTab;
-          return (
-            <div key={cl.number}
-              className={`cw-clue-row${isActive ? ' active' : ''}`}
-              onClick={() => handleClueClick(cl.r, cl.c, clueTab)}>
-              <span style={{ fontWeight: 800, marginRight: 6, color: isActive ? '#a78bfa' : '#666' }}>{cl.number}.</span>{cl.clue}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Hidden keyboard input */}
-      <input ref={inputRef}
-        style={{ position: 'fixed', left: -9999, top: 0, width: 1, height: 1, opacity: 0 }}
-        onChange={handleInput} onKeyDown={handleKeyDown}
-        autoCapitalize="characters" autoComplete="off" autoCorrect="off"
-        spellCheck={false} inputMode="text"
-      />
-    </div>
-  );
-}
-
-// ─── Home Screen ──────────────────────────────────────────────────────────────
-function HomeScreen({ cards, progress, onStudy, onQuiz, onCrossword, onAdmin, onReset, lastMissed, syncStatus, onSync }) {
-  const studied = cards.filter(c => progress[c.id]).length;
-  const knownWellCount = cards.filter(c => progress[c.id] && progress[c.id].reps >= 1).length;
-  const [showMissed, setShowMissed] = useState(false);
-  const [confirmReset, setConfirmReset] = useState(false);
-
-  return (
-    <div className="container">
-      <div className="home-hero">
-        <h1>Flashcards</h1>
-        <p>Made by Big Red and Gordito for Class 26C</p>
-      </div>
-
-      {syncStatus === 'syncing' && (
-        <div style={{textAlign:'center', color:'var(--text-muted)', fontSize:13, marginBottom:12}}>
-          &#8987; Loading cards...
-        </div>
-      )}
-      {syncStatus === 'error' && (
-        <div className="alert alert-error" style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-          <span>&#10007; Could not load cards from server.</span>
-          <button className="btn btn-sm btn-outline" style={{color:'#fca5a5', borderColor:'#fca5a5', marginLeft:8}} onClick={onSync}>Retry</button>
-        </div>
-      )}
-
-      <div className="card">
-        <div className="section-title">Your Progress</div>
-        <div style={{display:'flex', flexDirection:'column', gap:12}}>
-          <div className="home-stat">
-            <span className="home-stat-label">Total Cards</span>
-            <span className="home-stat-value">{cards.length}</span>
-          </div>
-          <div className="home-stat">
-            <span className="home-stat-label">Studied</span>
-            <span className="home-stat-value">{studied} / {cards.length}</span>
-          </div>
-          <div className="home-stat">
-            <span className="home-stat-label">Correct</span>
-            <span className="home-stat-value" style={{color:'var(--green)'}}>{knownWellCount}</span>
-          </div>
-        </div>
-      </div>
-
-      {lastMissed && lastMissed.length > 0 && (
-        <div className="card mt-4" style={{borderColor:'rgba(239,68,68,0.3)'}}>
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
-            <div className="section-title" style={{marginBottom:0, color:'var(--red)'}}>&#10007; Last Missed ({lastMissed.length})</div>
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowMissed(s => !s)}>
-              {showMissed ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          <button className="btn btn-red btn-full" style={{marginBottom: showMissed ? 12 : 0}} onClick={() => onStudy('missed')}>
-            Study Missed Cards
-          </button>
-          {showMissed && lastMissed.map((c, i) => (
-            <div key={c.id + i} className="missed-item animate-in">
-              <div className="q">Q: {c.front}</div>
-              <div className="a">A: {c.back}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {cards.length === 0 ? (
-        <div className="card mt-4 text-center">
-          <p className="text-muted" style={{fontSize:15}}>No cards yet &#8212; an admin needs to add some!</p>
-        </div>
-      ) : (
-        <div className="home-actions mt-4">
-          <button className="btn btn-primary btn-full btn-lg" onClick={() => onStudy('all')}>
-            &#128218; Study All Cards
-          </button>
-          {cards.filter(c => !progress[c.id] || progress[c.id].reps < 1).length > 0 && (
-            <button className="btn btn-full btn-lg" style={{background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.4)', color:'#fca5a5'}} onClick={() => onStudy('weak')}>
-              &#10007; Study Missed ({cards.filter(c => !progress[c.id] || progress[c.id].reps < 1).length})
-            </button>
-          )}
-          <button className="btn btn-outline btn-full btn-lg" onClick={onQuiz}>
-            &#127919; Quiz Mode
-          </button>
-          <button className="btn btn-outline btn-full btn-lg" onClick={onCrossword}>
-            {'\ud83e\udde9'} Crossword Challenge
-          </button>
-          <button className="btn btn-ghost btn-full" style={{color:'var(--text-muted)', fontSize:13}} onClick={() => setConfirmReset(true)}>
-            &#8635; Reset All Progress
-          </button>
-        </div>
-      )}
-
-      <div className="text-center mt-8">
-        <button className="btn btn-ghost btn-sm" onClick={onAdmin} style={{color:'var(--text-muted)'}}>
-          &#9881; Admin
-        </button>
-      </div>
-
-      {confirmReset && (
-        <div className="modal-overlay">
-          <div className="modal-box animate-in">
-            <h3>Reset All Progress?</h3>
-            <p>This clears all your correct/incorrect history. Cards remain, only your personal progress is reset.</p>
-            <div className="modal-actions">
-              <button className="btn btn-outline" onClick={() => setConfirmReset(false)}>Cancel</button>
-              <button className="btn btn-red" onClick={() => { onReset(); setConfirmReset(false); }}>Reset</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── App ──────────────────────────────────────────────────────────────────────
+// ============================================================
+// MAIN APP
+// ============================================================
 function App() {
-  const [cards, setCardsRaw] = useState(() => loadJSON(STORAGE_KEYS.cards, DEFAULT_CARDS));
-  const [progress, setProgressRaw] = useState(() => loadJSON(STORAGE_KEYS.progress, {}));
   const [screen, setScreen] = useState('home');
-  const [adminAuthed, setAdminAuthed] = useState(false);
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(() => loadFromStorage(STORAGE_KEYS.PROGRESS, {}));
   const [studyCards, setStudyCards] = useState([]);
   const [studyTitle, setStudyTitle] = useState('');
+  const [showReset, setShowReset] = useState(false);
   const [studyKey, setStudyKey] = useState(0);
-  const [lastMissed, setLastMissed] = useState([]);
-  const [syncStatus, setSyncStatus] = useState('idle'); // idle | syncing | done | error
 
-  // Fetch shared cards from GitHub on mount
-  useEffect(() => { syncCards(); }, []);
-
-  function syncCards() {
-    setSyncStatus('syncing');
-    fetchRemoteCards().then(remote => {
-      if (remote && Array.isArray(remote)) {
-        setCardsRaw(remote);
-        saveJSON(STORAGE_KEYS.cards, remote);
-        setSyncStatus('done');
-      } else {
-        setSyncStatus('error');
-      }
-    });
+  // Fetch cards from Supabase on mount
+  async function loadCards() {
+    setLoading(true);
+    const data = await fetchCards();
+    setCards(data);
+    setLoading(false);
   }
 
-  function setCards(val) {
-    const v = typeof val === 'function' ? val(cards) : val;
-    setCardsRaw(v);
-    saveJSON(STORAGE_KEYS.cards, v);
-  }
+  useEffect(() => { loadCards(); }, []);
 
-  function updateProgress(val) {
-    const v = typeof val === 'function' ? val(progress) : val;
-    setProgressRaw(v);
-    saveJSON(STORAGE_KEYS.progress, v);
-  }
+  // Persist progress to localStorage
+  useEffect(() => { saveToStorage(STORAGE_KEYS.PROGRESS, progress); }, [progress]);
 
-  function handleStudy(mode) {
-    let subset = cards;
-    let title = 'All Cards';
-    if (mode === 'missed') {
-      subset = lastMissed;
-      title = 'Missed Cards';
-    } else if (mode === 'weak') {
-      subset = cards.filter(c => !progress[c.id] || progress[c.id].reps < 1);
-      title = 'Missed Cards';
+  function startStudy(mode) {
+    let selected = [...cards];
+    let title = 'Study All';
+    if (mode === 'shuffle') {
+      selected = selected.sort(() => Math.random() - 0.5);
+      title = 'Shuffle Mode';
     }
-    const shuffled = [...subset].sort(() => Math.random() - 0.5);
-    setStudyCards(shuffled);
+    setStudyCards(selected);
     setStudyTitle(title);
-    setStudyKey(k => k + 1);
     setScreen('study');
   }
 
-  function handleReset() {
-    updateProgress({});
-    setLastMissed([]);
+  function startMissed() {
+    const missed = cards.filter(c => progress[c.id]?.lastQuality < 2);
+    setStudyCards(missed);
+    setStudyTitle('Missed Cards Review');
+    setScreen('study');
   }
 
-  function handleAdminClick() {
-    if (adminAuthed) { setScreen('admin'); }
-    else { setScreen('admin-login'); }
+  function startSpaced() {
+    const now = Date.now();
+    const due = cards.filter(c => {
+      const p = progress[c.id];
+      return p && p.nextReview && p.nextReview <= now;
+    });
+    setStudyCards(due);
+    setStudyTitle('Spaced Review');
+    setScreen('study');
   }
 
-  function handleAdminLogout() {
-    setAdminAuthed(false);
-    setScreen('home');
+  function updateProgress(newProgress) {
+    setProgress(newProgress);
   }
 
-  function handleAdminLogin() {
-    setAdminAuthed(true);
-    setScreen('admin');
+  function resetProgress() {
+    setProgress({});
+    setShowReset(false);
   }
 
   return (
-    <>
-      <nav className="navbar">
-        <div className="container navbar-inner">
-          <div>
-            <div className="navbar-brand">FlashCards</div>
-            <div className="navbar-sub">adrianvon.dev</div>
-          </div>
-          {screen !== 'home' && (
-            <button className="btn btn-ghost btn-sm" onClick={() => setScreen('home')}>Home</button>
+    <div style={{minHeight:'100vh'}}>
+      <nav className="nav">
+        <div className="nav-title" style={{cursor:'pointer'}} onClick={() => { setScreen('home'); loadCards(); }}>ð Flashcards</div>
+        <div style={{display:'flex', gap:8, alignItems:'center'}}>
+          {screen === 'home' && (
+            <button className="btn btn-outline btn-sm" onClick={() => setShowReset(true)} title="Reset progress">
+              Reset Progress
+            </button>
           )}
         </div>
       </nav>
@@ -1373,58 +861,51 @@ function App() {
         <HomeScreen
           cards={cards}
           progress={progress}
-          onStudy={handleStudy}
-          onQuiz={() => setScreen('quiz')}
-          onCrossword={() => setScreen('crossword')}
-          onAdmin={handleAdminClick}
-          onReset={handleReset}
-          lastMissed={lastMissed}
-          syncStatus={syncStatus}
-          onSync={syncCards}
+          loading={loading}
+          onStartStudy={startStudy}
+          onStartMissed={startMissed}
+          onStartQuiz={() => { setStudyCards([...cards].sort(() => Math.random() - 0.5)); setScreen('quiz'); }}
+          onStartSpaced={startSpaced}
+          onAdmin={() => setScreen('admin')}
         />
       )}
+
       {screen === 'study' && (
         <StudyScreen
-          key={studyKey}
           cards={studyCards}
           progress={progress}
           setProgress={updateProgress}
-          onBack={(missed) => { setLastMissed(missed || []); setScreen('home'); }}
+          onBack={() => { setScreen('home'); loadCards(); }}
+          key={studyKey}
+          onStartSubset={(subset, subTitle) => { setStudyCards(subset); setStudyTitle(subTitle); setStudyKey(k => k + 1); }}
           title={studyTitle}
-          onStartSubset={(subset, subTitle) => {
-            const shuffled = [...subset].sort(() => Math.random() - 0.5);
-            setStudyCards(shuffled);
-            setStudyTitle(subTitle);
-            setStudyKey(k => k + 1);
-          }}
         />
       )}
+
       {screen === 'quiz' && (
         <QuizScreen
-          cards={[...cards].sort(() => Math.random() - 0.5)}
-          onBack={() => setScreen('home')}
+          cards={studyCards}
+          progress={progress}
+          setProgress={updateProgress}
+          onBack={() => { setScreen('home'); loadCards(); }}
         />
       )}
-      {screen === 'crossword' && (
-        <CrosswordScreen onBack={() => setScreen('home')} />
-      )}
-      {screen === 'admin-login' && (
-        <AdminLogin onLogin={handleAdminLogin} />
-      )}
+
       {screen === 'admin' && (
         <AdminPanel
           cards={cards}
           setCards={setCards}
-          onBack={() => setScreen('home')}
-          onLogout={handleAdminLogout}
+          onBack={() => { setScreen('home'); loadCards(); }}
+          refreshCards={loadCards}
         />
       )}
-    </>
+
+      {showReset && <ResetConfirm onConfirm={resetProgress} onCancel={() => setShowReset(false)} />}
+    </div>
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
