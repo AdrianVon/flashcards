@@ -9,91 +9,96 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
-  :root {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --surface2: #334155;
-    --border: #475569;
-    --text: #f1f5f9;
-    --text2: #94a3b8;
-    --accent: #6366f1;
-    --accent2: #818cf8;
-    --green: #22c55e;
-    --red: #ef4444;
-    --yellow: #eab308;
-    --orange: #f97316;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+:root {
+--bg: #0f172a;
+--surface: #1e293b;
+--surface2: #334155;
+--border: #475569;
+--text: #f1f5f9;
+--text2: #94a3b8;
+--accent: #6366f1;
+--accent2: #818cf8;
+--green: #22c55e;
+--red: #ef4444;
+--yellow: #eab308;
+--orange: #f97316;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  /* Card flip */
-  .card-container { perspective: 1000px; width: 100%; max-width: 560px; height: 340px; cursor: pointer; margin: 0 auto; }
-  .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
-  .card-inner.flipped { transform: rotateY(180deg); }
-  .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; font-size: 1.25rem; line-height: 1.6; }
-  .card-front { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
-  .card-back { background: linear-gradient(135deg, #059669, #10b981); color: white; transform: rotateY(180deg); }
-  .card-label { position: absolute; top: 16px; left: 20px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; }
-  .card-number { position: absolute; top: 16px; right: 20px; font-size: 0.75rem; opacity: 0.7; }
+/* Card flip */
+.card-container { perspective: 1000px; width: 100%; max-width: 560px; height: 340px; cursor: pointer; margin: 0 auto; }
+.card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
+.card-inner.flipped { transform: rotateY(180deg); }
+.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; font-size: 1.25rem; line-height: 1.6; }
+.card-front { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+.card-back { background: linear-gradient(135deg, #059669, #10b981); color: white; transform: rotateY(180deg); }
+.card-label { position: absolute; top: 16px; left: 20px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; }
+.card-number { position: absolute; top: 16px; right: 20px; font-size: 0.75rem; opacity: 0.7; }
 
-  /* Swipe */
-  .card-container { touch-action: pan-y; user-select: none; }
+/* Swipe */
+.card-container { touch-action: pan-y; user-select: none; }
 
-  /* Buttons */
-  .btn { padding: 10px 20px; border-radius: 10px; border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px; }
-  .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
-  .btn:active { transform: translateY(0); }
-  .btn-accent { background: var(--accent); color: white; }
-  .btn-green { background: var(--green); color: white; }
-  .btn-red { background: var(--red); color: white; }
-  .btn-surface { background: var(--surface2); color: var(--text); }
-  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text2); }
-  .btn-outline:hover { border-color: var(--accent); color: var(--accent2); }
-  .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
-  .btn-lg { padding: 14px 28px; font-size: 1rem; }
+/* Buttons */
+.btn { padding: 10px 20px; border-radius: 10px; border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px; }
+.btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+.btn:active { transform: translateY(0); }
+.btn-accent { background: var(--accent); color: white; }
+.btn-green { background: var(--green); color: white; }
+.btn-red { background: var(--red); color: white; }
+.btn-surface { background: var(--surface2); color: var(--text); }
+.btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text2); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent2); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.btn-lg { padding: 14px 28px; font-size: 1rem; }
 
-  /* Progress bar */
-  .progress-bar { width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+/* Progress bar */
+.progress-bar { width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
 
-  /* Input */
-  .input { width: 100%; padding: 10px 14px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
-  .input:focus { border-color: var(--accent); }
-  .textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+/* Input */
+.input { width: 100%; padding: 10px 14px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
+.input:focus { border-color: var(--accent); }
+.textarea { resize: vertical; min-height: 80px; font-family: inherit; }
 
-  /* Nav */
-  .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--surface2); background: var(--surface); }
-  .nav-title { font-size: 1.1rem; font-weight: 700; }
+/* Nav */
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--surface2); background: var(--surface); }
+.nav-title { font-size: 1.1rem; font-weight: 700; }
 
-  /* Animations */
-  @keyframes slideIn { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
-  .animate-in { animation: slideIn 0.3s ease-out; }
-  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+/* Animations */
+@keyframes slideIn { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+.animate-in { animation: slideIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
-  /* Quiz */
-  .quiz-option { width: 100%; padding: 14px 18px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; color: var(--text); font-size: 0.95rem; cursor: pointer; transition: all 0.15s; text-align: left; }
-  .quiz-option:hover { border-color: var(--accent); background: var(--surface2); }
-  .quiz-option.correct { border-color: var(--green); background: rgba(34,197,94,0.15); }
-  .quiz-option.wrong { border-color: var(--red); background: rgba(239,68,68,0.15); }
+/* Quiz */
+.quiz-option { width: 100%; padding: 14px 18px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; color: var(--text); font-size: 0.95rem; cursor: pointer; transition: all 0.15s; text-align: left; }
+.quiz-option:hover { border-color: var(--accent); background: var(--surface2); }
+.quiz-option.correct { border-color: var(--green); background: rgba(34,197,94,0.15); }
+.quiz-option.wrong { border-color: var(--red); background: rgba(239,68,68,0.15); }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
 
-  /* Modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.2s; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.2s; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
 
-  /* Loading spinner */
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2.5px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* Loading spinner */
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2.5px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  @media (max-width: 640px) {
-    .card-container { height: 280px; }
-    .card-face { font-size: 1.05rem; padding: 24px; }
-    .nav { padding: 12px 16px; }
-  }
+/* Auth */
+.auth-pill { display:flex; align-items:center; gap:8px; }
+.avatar-badge { display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px; background: var(--surface2); color: var(--text); font-size:0.7rem; font-weight:700; }
+.admin-tag { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; background: var(--accent); color:white; border-radius:6px; padding:2px 6px; }
+
+@media (max-width: 640px) {
+.card-container { height: 280px; }
+.card-face { font-size: 1.05rem; padding: 24px; }
+.nav { padding: 12px 16px; }
+}
 </style>
 </head>
 <body>
@@ -105,104 +110,146 @@ const { useState, useEffect, useCallback, useMemo, useRef } = React;
 // SUPABASE CONFIG
 // ============================================================
 const SUPABASE_URL = "https://pfvbfpyxchglxveyjsge.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmdmJmcHl4Y2hnbHh2ZXlqc2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMTE1NzgsImV4cCI6MjA4NTg4NzU3OH0.-wi-iVu1Pn4t9OKjNElB_enmEXR4rbXcmOSDuAgpAn0";
+const SUPABASE_ANON_KEY = "sb_publishable_eOZHAg_c0og_G5I0VIM60g_bc8ziADW";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================================
-// SUPABASE HELPERS
+// SUPABASE HELPERS - cards
 // ============================================================
 async function fetchCards() {
-  const { data, error } = await supabase
-    .from("flashcards")
-    .select("*")
-    .order("id", { ascending: true });
-  if (error) { console.error("Error fetching cards:", error); return []; }
-  return data || [];
+const { data, error } = await supabase
+.from("flashcards")
+.select("*")
+.order("id", { ascending: true });
+if (error) { console.error("Error fetching cards:", error); return []; }
+return data || [];
 }
 
 async function insertCard(front, back, tags = []) {
-  const { data, error } = await supabase
-    .from("flashcards")
-    .insert([{ front, back, tags }])
-    .select();
-  if (error) { console.error("Error inserting card:", error); return null; }
-  return data?.[0] || null;
+const { data, error } = await supabase
+.from("flashcards")
+.insert([{ front, back, tags }])
+.select();
+if (error) { console.error("Error inserting card:", error); return null; }
+return data?.[0] || null;
 }
 
 async function updateCard(id, front, back) {
-  const { error } = await supabase
-    .from("flashcards")
-    .update({ front, back })
-    .eq("id", id);
-  if (error) { console.error("Error updating card:", error); return false; }
-  return true;
+const { error } = await supabase
+.from("flashcards")
+.update({ front, back })
+.eq("id", id);
+if (error) { console.error("Error updating card:", error); return false; }
+return true;
 }
 
 async function deleteCardFromDB(id) {
-  const { error } = await supabase
-    .from("flashcards")
-    .delete()
-    .eq("id", id);
-  if (error) { console.error("Error deleting card:", error); return false; }
-  return true;
+const { error } = await supabase
+.from("flashcards")
+.delete()
+.eq("id", id);
+if (error) { console.error("Error deleting card:", error); return false; }
+return true;
 }
 
 async function importCardsToDB(cardsArray) {
-  const { data, error } = await supabase
-    .from("flashcards")
-    .insert(cardsArray.map(c => ({ front: c.front, back: c.back, tags: c.tags || [] })))
-    .select();
-  if (error) { console.error("Error importing cards:", error); return []; }
-  return data || [];
+const { data, error } = await supabase
+.from("flashcards")
+.insert(cardsArray.map(c => ({ front: c.front, back: c.back, tags: c.tags || [] })))
+.select();
+if (error) { console.error("Error importing cards:", error); return []; }
+return data || [];
 }
 
-// Admin password - change this!
-const ADMIN_PASSWORD = "admin123";
+// ============================================================
+// SUPABASE HELPERS - per-user progress
+// ============================================================
+async function fetchProgress(userId) {
+const { data, error } = await supabase
+.from("flashcard_progress")
+.select("*")
+.eq("user_id", userId);
+if (error) { console.error("Error fetching progress:", error); return {}; }
+const map = {};
+for (const row of data) {
+map[row.card_id] = {
+interval: row.interval,
+ease: row.ease,
+reps: row.reps,
+nextReview: row.next_review,
+lastReview: row.last_review,
+lastQuality: row.last_quality,
+};
+}
+return map;
+}
+
+async function saveProgressRow(userId, cardId, entry) {
+const { error } = await supabase.from("flashcard_progress").upsert(
+{
+user_id: userId,
+card_id: cardId,
+interval: entry.interval,
+ease: entry.ease,
+reps: entry.reps,
+next_review: entry.nextReview,
+last_review: entry.lastReview,
+last_quality: entry.lastQuality,
+updated_at: new Date().toISOString(),
+},
+{ onConflict: "user_id,card_id" }
+);
+if (error) console.error("Error saving progress:", error);
+}
+
+async function clearProgressRows(userId) {
+const { error } = await supabase.from("flashcard_progress").delete().eq("user_id", userId);
+if (error) console.error("Error clearing progress:", error);
+}
 
 // ============================================================
-// LOCAL STORAGE HELPERS (progress only)
+// LOCAL STORAGE HELPERS (guest progress only -- signed-in users use Supabase)
 // ============================================================
 const STORAGE_KEYS = {
-  PROGRESS: "fc_progress_v1",
-  ADMIN_AUTH: "fc_admin_auth",
+PROGRESS: "fc_progress_v1",
 };
 
 function loadFromStorage(key, fallback) {
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : fallback;
-  } catch { return fallback; }
+try {
+const data = localStorage.getItem(key);
+return data ? JSON.parse(data) : fallback;
+} catch { return fallback; }
 }
 
 function saveToStorage(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
 // ============================================================
 // SPACED REPETITION (SM-2 simplified)
 // ============================================================
 function getNextReview(card, quality) {
-  const now = Date.now();
-  const prev = card || { interval: 0, ease: 2.5, reps: 0, nextReview: now };
-  let { interval, ease, reps } = prev;
+const now = Date.now();
+const prev = card || { interval: 0, ease: 2.5, reps: 0, nextReview: now };
+let { interval, ease, reps } = prev;
 
-  if (quality < 2) {
-    reps = 0;
-    interval = 1;
-  } else {
-    if (reps === 0) interval = 1;
-    else if (reps === 1) interval = 6;
-    else interval = Math.round(interval * ease);
-    reps++;
-  }
+if (quality < 2) {
+reps = 0;
+interval = 1;
+} else {
+if (reps === 0) interval = 1;
+else if (reps === 1) interval = 6;
+else interval = Math.round(interval * ease);
+reps++;
+}
 
-  ease = Math.max(1.3, ease + (0.1 - (3 - quality) * (0.08 + (3 - quality) * 0.02)));
+ease = Math.max(1.3, ease + (0.1 - (3 - quality) * (0.08 + (3 - quality) * 0.02)));
 
-  if (quality === 3) interval = Math.round(interval * 1.3);
-  if (quality === 1) interval = Math.max(1, Math.round(interval * 0.6));
+if (quality === 3) interval = Math.round(interval * 1.3);
+if (quality === 1) interval = Math.max(1, Math.round(interval * 0.6));
 
-  const nextReview = now + interval * 60 * 1000;
-  return { interval, ease, reps, nextReview, lastReview: now, lastQuality: quality };
+const nextReview = now + interval * 60 * 1000;
+return { interval, ease, reps, nextReview, lastReview: now, lastQuality: quality };
 }
 
 // ============================================================
@@ -211,698 +258,860 @@ function getNextReview(card, quality) {
 
 // --- Flashcard ---
 function Flashcard({ card, index, total, flipped, onFlip }) {
-  return (
-    <div className="card-container" onClick={onFlip}>
-      <div className={`card-inner ${flipped ? 'flipped' : ''}`}>
-        <div className="card-face card-front">
-          <div className="card-label">Question</div>
-          <div className="card-number">{index + 1} / {total}</div>
-          <div style={{fontSize: card.front.length > 100 ? '1rem' : '1.25rem'}}>{card.front}</div>
-          <div style={{position:'absolute', bottom:16, fontSize:'0.7rem', opacity:0.6}}>Tap to reveal answer</div>
-        </div>
-        <div className="card-face card-back">
-          <div className="card-label">Answer</div>
-          <div className="card-number">{index + 1} / {total}</div>
-          <div style={{fontSize: card.back.length > 100 ? '1rem' : '1.25rem'}}>{card.back}</div>
-        </div>
-      </div>
-    </div>
-  );
+return (
+<div className="card-container" onClick={onFlip}>
+<div className={`card-inner ${flipped ? 'flipped' : ''}`}>
+<div className="card-face card-front">
+<div className="card-label">Question</div>
+<div className="card-number">{index + 1} / {total}</div>
+<div style={{fontSize: card.front.length > 100 ? '1rem' : '1.25rem'}}>{card.front}</div>
+<div style={{position:'absolute', bottom:16, fontSize:'0.7rem', opacity:0.6}}>Tap to reveal answer</div>
+</div>
+<div className="card-face card-back">
+<div className="card-label">Answer</div>
+<div className="card-number">{index + 1} / {total}</div>
+<div style={{fontSize: card.back.length > 100 ? '1rem' : '1.25rem'}}>{card.back}</div>
+</div>
+</div>
+</div>
+);
+}
+
+// --- Auth: sign in / sign up modal ---
+function AuthModal({ onClose }) {
+const [mode, setMode] = useState('sign_in');
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [error, setError] = useState('');
+const [notice, setNotice] = useState('');
+const [submitting, setSubmitting] = useState(false);
+
+async function handleSubmit(e) {
+e.preventDefault();
+setError('');
+setNotice('');
+setSubmitting(true);
+
+if (mode === 'sign_in') {
+const { error } = await supabase.auth.signInWithPassword({ email, password });
+setSubmitting(false);
+if (error) { setError(error.message); return; }
+onClose();
+} else {
+const { data, error } = await supabase.auth.signUp({ email, password });
+setSubmitting(false);
+if (error) { setError(error.message); return; }
+if (!data.session) {
+setNotice('Check your email to confirm your account, then sign in.');
+setMode('sign_in');
+} else {
+onClose();
+}
+}
+}
+
+return (
+<div className="modal-overlay" onClick={onClose}>
+<div className="modal" onClick={e => e.stopPropagation()}>
+<h3 style={{marginBottom:4}}>{mode === 'sign_in' ? 'Sign in' : 'Create an account'}</h3>
+<p style={{fontSize:'0.85rem', color:'var(--text2)', marginBottom:16}}>
+{mode === 'sign_in' ? 'Sign in to save your study progress across visits.' : 'Save which cards you know so you can pick up where you left off.'}
+</p>
+<form onSubmit={handleSubmit}>
+<label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Email</label>
+<input className="input" type="email" required autoFocus value={email} onChange={e => setEmail(e.target.value)} style={{marginBottom:12}} />
+<label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Password</label>
+<input className="input" type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} style={{marginBottom:12}} />
+
+{error && <div style={{color:'var(--red)', fontSize:'0.85rem', marginBottom:10}}>{error}</div>}
+{notice && <div style={{color:'var(--green)', fontSize:'0.85rem', marginBottom:10}}>{notice}</div>}
+
+<button
+type="button"
+onClick={() => { setMode(mode === 'sign_in' ? 'sign_up' : 'sign_in'); setError(''); setNotice(''); }}
+style={{background:'none', border:'none', color:'var(--accent2)', fontSize:'0.8rem', cursor:'pointer', textDecoration:'underline', padding:0, marginBottom:16, display:'block'}}
+>
+{mode === 'sign_in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+</button>
+
+<div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+<button type="button" className="btn btn-outline btn-sm" onClick={onClose}>Cancel</button>
+<button type="submit" className="btn btn-accent btn-sm" disabled={submitting}>
+{submitting ? 'Please wait…' : mode === 'sign_in' ? 'Sign in' : 'Create account'}
+</button>
+</div>
+</form>
+</div>
+</div>
+);
+}
+
+// --- Auth: nav control ---
+function AuthControl({ user, isAdmin, onSignedOut }) {
+const [showAuth, setShowAuth] = useState(false);
+const [showMenu, setShowMenu] = useState(false);
+
+async function handleSignOut() {
+await supabase.auth.signOut();
+setShowMenu(false);
+onSignedOut();
+}
+
+if (!user) {
+return (
+<>
+<button className="btn btn-outline btn-sm" onClick={() => setShowAuth(true)}>Sign in</button>
+{showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+</>
+);
+}
+
+return (
+<div style={{position:'relative'}}>
+<button className="btn btn-outline btn-sm auth-pill" onClick={() => setShowMenu(v => !v)}>
+<span className="avatar-badge">{user.email?.[0]?.toUpperCase() ?? '?'}</span>
+<span style={{maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{user.email}</span>
+{isAdmin && <span className="admin-tag">admin</span>}
+</button>
+{showMenu && (
+<div style={{position:'absolute', right:0, top:38, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:6, minWidth:140, zIndex:50}}>
+<button className="btn btn-outline btn-sm" style={{width:'100%', justifyContent:'center'}} onClick={handleSignOut}>Sign out</button>
+</div>
+)}
+</div>
+);
 }
 
 // --- Home Screen ---
-function HomeScreen({ cards, progress, onStartStudy, onStartMissed, onStartQuiz, onStartSpaced, onAdmin, loading }) {
-  const totalCards = cards.length;
-  const studied = Object.keys(progress).filter(id => progress[id]?.lastReview).length;
-  const mastered = Object.keys(progress).filter(id => progress[id]?.reps >= 3).length;
-  const missed = Object.keys(progress).filter(id => progress[id]?.lastQuality < 2).length;
-  const dueForReview = cards.filter(c => {
-    const p = progress[c.id];
-    return p && p.nextReview && p.nextReview <= Date.now();
-  }).length;
+function HomeScreen({ cards, progress, onStartStudy, onStartMissed, onStartQuiz, onStartSpaced, onAdmin, loading, isAdmin }) {
+const totalCards = cards.length;
+const studied = Object.keys(progress).filter(id => progress[id]?.lastReview).length;
+const mastered = Object.keys(progress).filter(id => progress[id]?.reps >= 3).length;
+const missed = Object.keys(progress).filter(id => progress[id]?.lastQuality < 2).length;
+const dueForReview = cards.filter(c => {
+const p = progress[c.id];
+return p && p.nextReview && p.nextReview <= Date.now();
+}).length;
 
-  return (
-    <div className="animate-in" style={{padding:'24px', maxWidth:600, margin:'0 auto'}}>
-      <div style={{textAlign:'center', marginBottom:32}}>
-        <div style={{fontSize:'2.5rem', marginBottom:8}}>ð</div>
-        <h1 style={{fontSize:'1.5rem', fontWeight:800, marginBottom:4}}>Flashcards</h1>
-        <p style={{color:'var(--text2)', fontSize:'0.9rem'}}>Study smarter, not harder</p>
-      </div>
+return (
+<div className="animate-in" style={{padding:'24px', maxWidth:600, margin:'0 auto'}}>
+<div style={{textAlign:'center', marginBottom:32}}>
+<div style={{fontSize:'2.5rem', marginBottom:8}}>📚</div>
+<h1 style={{fontSize:'1.5rem', fontWeight:800, marginBottom:4}}>Flashcards</h1>
+<p style={{color:'var(--text2)', fontSize:'0.9rem'}}>Study smarter, not harder</p>
+</div>
 
-      {/* Stats */}
-      <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12, marginBottom:28}}>
-        {[
-          {label:'Total Cards', value: totalCards, color:'var(--accent)'},
-          {label:'Studied', value: studied, color:'var(--green)'},
-          {label:'Mastered', value: mastered, color:'var(--yellow)'},
-          {label:'Due for Review', value: dueForReview, color:'var(--orange)'},
-        ].map(s => (
-          <div key={s.label} style={{background:'var(--surface)', borderRadius:12, padding:'16px 18px', border:'1px solid var(--surface2)'}}>
-            <div style={{fontSize:'1.4rem', fontWeight:700, color:s.color}}>{s.value}</div>
-            <div style={{fontSize:'0.75rem', color:'var(--text2)', marginTop:2}}>{s.label}</div>
-          </div>
-        ))}
-      </div>
+{/* Stats */}
+<div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12, marginBottom:28}}>
+{[
+{label:'Total Cards', value: totalCards, color:'var(--accent)'},
+{label:'Studied', value: studied, color:'var(--green)'},
+{label:'Mastered', value: mastered, color:'var(--yellow)'},
+{label:'Due for Review', value: dueForReview, color:'var(--orange)'},
+].map(s => (
+<div key={s.label} style={{background:'var(--surface)', borderRadius:12, padding:'16px 18px', border:'1px solid var(--surface2)'}}>
+<div style={{fontSize:'1.4rem', fontWeight:700, color:s.color}}>{s.value}</div>
+<div style={{fontSize:'0.75rem', color:'var(--text2)', marginTop:2}}>{s.label}</div>
+</div>
+))}
+</div>
 
-      {loading ? (
-        <div style={{textAlign:'center', padding:40, color:'var(--text2)'}}>
-          <div className="spinner" style={{marginBottom:12}} />
-          <p>Loading cards...</p>
-        </div>
-      ) : totalCards === 0 ? (
-        <div style={{textAlign:'center', padding:40, color:'var(--text2)'}}>
-          <p style={{marginBottom:12}}>No flashcards yet!</p>
-          <p style={{fontSize:'0.85rem'}}>Sign into the admin panel to add cards.</p>
-        </div>
-      ) : (
-        <div style={{display:'flex', flexDirection:'column', gap:10}}>
-          <button className="btn btn-accent btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={() => onStartStudy('all')}>
-            Study All Cards ({totalCards})
-          </button>
+{loading ? (
+<div style={{textAlign:'center', padding:40, color:'var(--text2)'}}>
+<div className="spinner" style={{marginBottom:12}} />
+<p>Loading cards...</p>
+</div>
+) : totalCards === 0 ? (
+<div style={{textAlign:'center', padding:40, color:'var(--text2)'}}>
+<p style={{marginBottom:12}}>No flashcards yet!</p>
+<p style={{fontSize:'0.85rem'}}>Sign into the admin panel to add cards.</p>
+</div>
+) : (
+<div style={{display:'flex', flexDirection:'column', gap:10}}>
+<button className="btn btn-accent btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={() => onStartStudy('all')}>
+Study All Cards ({totalCards})
+</button>
 
-          {dueForReview > 0 && (
-            <button className="btn btn-surface btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={onStartSpaced}>
-              Spaced Review ({dueForReview} due)
-            </button>
-          )}
+{dueForReview > 0 && (
+<button className="btn btn-surface btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={onStartSpaced}>
+Spaced Review ({dueForReview} due)
+</button>
+)}
 
-          {missed > 0 && (
-            <button className="btn btn-lg" style={{width:'100%', justifyContent:'center', background:'var(--red)', color:'white'}} onClick={onStartMissed}>
-              Review Missed Cards ({missed})
-            </button>
-          )}
+{missed > 0 && (
+<button className="btn btn-lg" style={{width:'100%', justifyContent:'center', background:'var(--red)', color:'white'}} onClick={onStartMissed}>
+Review Missed Cards ({missed})
+</button>
+)}
 
-          <button className="btn btn-outline btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={onStartQuiz}>
-            Quiz Mode
-          </button>
+<button className="btn btn-outline btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={onStartQuiz}>
+Quiz Mode
+</button>
 
-          <button className="btn btn-outline btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={() => onStartStudy('shuffle')}>
-            Shuffle & Study
-          </button>
-        </div>
-      )}
+<button className="btn btn-outline btn-lg" style={{width:'100%', justifyContent:'center'}} onClick={() => onStartStudy('shuffle')}>
+Shuffle & Study
+</button>
+</div>
+)}
 
-      <button
-        className="btn btn-outline btn-sm"
-        style={{margin:'28px auto 0', display:'block'}}
-        onClick={onAdmin}
-      >
-        Admin Panel
-      </button>
-    </div>
-  );
+{isAdmin && (
+<button
+className="btn btn-outline btn-sm"
+style={{margin:'28px auto 0', display:'block'}}
+onClick={onAdmin}
+>
+Admin Panel
+</button>
+)}
+</div>
+);
 }
 
 // --- Study Screen ---
 function StudyScreen({ cards, progress, setProgress, onBack, onStartSubset, title }) {
-  const [index, setIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [graded, setGraded] = useState(false);
-  const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, total: cards.length });
-  const [missedCards, setMissedCards] = useState([]);
-  const [done, setDone] = useState(false);
-  const [showMissedList, setShowMissedList] = useState(false);
+const [index, setIndex] = useState(0);
+const [flipped, setFlipped] = useState(false);
+const [graded, setGraded] = useState(false);
+const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, total: cards.length });
+const [missedCards, setMissedCards] = useState([]);
+const [done, setDone] = useState(false);
+const [showMissedList, setShowMissedList] = useState(false);
 
-  const card = cards[index];
+const card = cards[index];
 
-  function grade(isCorrect) {
-    const quality = isCorrect ? 2 : 0;
-    const updated = getNextReview(progress[card.id], quality);
-    const newProgress = { ...progress, [card.id]: updated };
-    setProgress(newProgress);
-    setGraded(true);
+function grade(isCorrect) {
+const quality = isCorrect ? 2 : 0;
+const updated = getNextReview(progress[card.id], quality);
+const newProgress = { ...progress, [card.id]: updated };
+setProgress(newProgress, card.id, updated);
+setGraded(true);
 
-    if (isCorrect) {
-      setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
-    } else {
-      setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
-      setMissedCards(prev => [...prev, card]);
-    }
+if (isCorrect) {
+setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
+} else {
+setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
+setMissedCards(prev => [...prev, card]);
+}
 
-    setTimeout(() => {
-      if (index < cards.length - 1) {
-        setIndex(index + 1);
-        setFlipped(false);
-        setGraded(false);
-      } else {
-        setDone(true);
-      }
-    }, 400);
-  }
+setTimeout(() => {
+if (index < cards.length - 1) {
+setIndex(index + 1);
+setFlipped(false);
+setGraded(false);
+} else {
+setDone(true);
+}
+}, 400);
+}
 
-  if (done) {
-    const pct = cards.length > 0 ? Math.round((sessionStats.correct / cards.length) * 100) : 0;
-    return (
-      <div className="animate-in" style={{padding:24, maxWidth:540, margin:'0 auto', textAlign:'center'}}>
-        <div style={{fontSize:'3rem', marginBottom:16}}>{pct >= 80 ? 'ð' : pct >= 50 ? 'ð' : 'ðª'}</div>
-        <h2 style={{marginBottom:8}}>Session Complete!</h2>
-        <p style={{color:'var(--text2)', marginBottom:24}}>{title}</p>
-        <div style={{display:'flex', justifyContent:'center', gap:24, marginBottom:28}}>
-          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--green)'}}>{sessionStats.correct}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Correct</div></div>
-          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--red)'}}>{sessionStats.incorrect}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Missed</div></div>
-          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--accent)'}}>{pct}%</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Score</div></div>
-        </div>
+if (done) {
+const pct = cards.length > 0 ? Math.round((sessionStats.correct / cards.length) * 100) : 0;
+return (
+<div className="animate-in" style={{padding:24, maxWidth:540, margin:'0 auto', textAlign:'center'}}>
+<div style={{fontSize:'3rem', marginBottom:16}}>{pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪'}</div>
+<h2 style={{marginBottom:8}}>Session Complete!</h2>
+<p style={{color:'var(--text2)', marginBottom:24}}>{title}</p>
+<div style={{display:'flex', justifyContent:'center', gap:24, marginBottom:28}}>
+<div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--green)'}}>{sessionStats.correct}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Correct</div></div>
+<div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--red)'}}>{sessionStats.incorrect}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Missed</div></div>
+<div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--accent)'}}>{pct}%</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Score</div></div>
+</div>
 
-        {missedCards.length > 0 && (
-          <div style={{marginBottom:20}}>
-            <button
-              className="btn btn-lg"
-              style={{width:'100%', justifyContent:'center', background:'var(--red)', color:'white', marginBottom:10}}
-              onClick={() => onStartSubset(missedCards, 'Reviewing Missed Cards')}
-            >
-              Study Missed Cards ({missedCards.length})
-            </button>
-            <button
-              className="btn btn-outline btn-sm"
-              onClick={() => setShowMissedList(!showMissedList)}
-            >
-              {showMissedList ? 'Hide' : 'View'} Missed Cards
-            </button>
+{missedCards.length > 0 && (
+<div style={{marginBottom:20}}>
+<button
+className="btn btn-lg"
+style={{width:'100%', justifyContent:'center', background:'var(--red)', color:'white', marginBottom:10}}
+onClick={() => onStartSubset(missedCards, 'Reviewing Missed Cards')}
+>
+Study Missed Cards ({missedCards.length})
+</button>
+<button
+className="btn btn-outline btn-sm"
+onClick={() => setShowMissedList(!showMissedList)}
+>
+{showMissedList ? 'Hide' : 'View'} Missed Cards
+</button>
 
-            {showMissedList && (
-              <div style={{marginTop:14, textAlign:'left'}}>
-                {missedCards.map((mc, i) => (
-                  <div key={mc.id} style={{background:'var(--surface)', border:'1px solid var(--surface2)', borderRadius:10, padding:'12px 16px', marginBottom:8}}>
-                    <div style={{fontSize:'0.8rem', color:'var(--red)', marginBottom:4}}>Missed #{i + 1}</div>
-                    <div style={{fontSize:'0.9rem', fontWeight:600, marginBottom:4}}>{mc.front}</div>
-                    <div style={{fontSize:'0.85rem', color:'var(--text2)'}}>{mc.back}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+{showMissedList && (
+<div style={{marginTop:14, textAlign:'left'}}>
+{missedCards.map((mc, i) => (
+<div key={mc.id} style={{background:'var(--surface)', border:'1px solid var(--surface2)', borderRadius:10, padding:'12px 16px', marginBottom:8}}>
+<div style={{fontSize:'0.8rem', color:'var(--red)', marginBottom:4}}>Missed #{i + 1}</div>
+<div style={{fontSize:'0.9rem', fontWeight:600, marginBottom:4}}>{mc.front}</div>
+<div style={{fontSize:'0.85rem', color:'var(--text2)'}}>{mc.back}</div>
+</div>
+))}
+</div>
+)}
+</div>
+)}
 
-        <button className="btn btn-accent btn-lg" onClick={onBack}>Back to Home</button>
-      </div>
-    );
-  }
+<button className="btn btn-accent btn-lg" onClick={onBack}>Back to Home</button>
+</div>
+);
+}
 
-  if (!card) return <div style={{padding:24, textAlign:'center'}}>No cards to study.<br/><button className="btn btn-accent" style={{marginTop:16}} onClick={onBack}>Back</button></div>;
+if (!card) return <div style={{padding:24, textAlign:'center'}}>No cards to study.<br/><button className="btn btn-accent" style={{marginTop:16}} onClick={onBack}>Back</button></div>;
 
-  const progressPct = ((index) / cards.length) * 100;
+const progressPct = ((index) / cards.length) * 100;
 
-  return (
-    <div className="animate-in" style={{padding:24, maxWidth:600, margin:'0 auto'}}>
-      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-        <button className="btn btn-outline btn-sm" onClick={onBack}>â Back</button>
-        <span style={{fontSize:'0.8rem', color:'var(--text2)'}}>{title}</span>
-      </div>
+return (
+<div className="animate-in" style={{padding:24, maxWidth:600, margin:'0 auto'}}>
+<div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
+<button className="btn btn-outline btn-sm" onClick={onBack}>← Back</button>
+<span style={{fontSize:'0.8rem', color:'var(--text2)'}}>{title}</span>
+</div>
 
-      <div className="progress-bar" style={{marginBottom:24}}>
-        <div className="progress-fill" style={{width: progressPct + '%', background:'var(--accent)'}} />
-      </div>
+<div className="progress-bar" style={{marginBottom:24}}>
+<div className="progress-fill" style={{width: progressPct + '%', background:'var(--accent)'}} />
+</div>
 
-      <Flashcard card={card} index={index} total={cards.length} flipped={flipped} onFlip={() => { if (!graded) setFlipped(f => !f); }} />
+<Flashcard card={card} index={index} total={cards.length} flipped={flipped} onFlip={() => { if (!graded) setFlipped(f => !f); }} />
 
-      {flipped && !graded && (
-        <div className="animate-in" style={{display:'flex', justifyContent:'center', gap:12, marginTop:20, flexWrap:'wrap'}}>
-          <button className="btn btn-outline btn-lg" style={{minWidth:80, justifyContent:'center'}} onClick={() => setFlipped(false)}>Flip</button>
-          <button className="btn btn-red btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(false)}>Incorrect</button>
-          <button className="btn btn-green btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(true)}>Correct</button>
-        </div>
-      )}
+{flipped && !graded && (
+<div className="animate-in" style={{display:'flex', justifyContent:'center', gap:12, marginTop:20, flexWrap:'wrap'}}>
+<button className="btn btn-outline btn-lg" style={{minWidth:80, justifyContent:'center'}} onClick={() => setFlipped(false)}>Flip</button>
+<button className="btn btn-red btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(false)}>Incorrect</button>
+<button className="btn btn-green btn-lg" style={{minWidth:130, justifyContent:'center'}} onClick={() => grade(true)}>Correct</button>
+</div>
+)}
 
-      {!flipped && (
-        <div style={{textAlign:'center', marginTop:20}}>
-          <button className="btn btn-accent btn-lg" onClick={() => setFlipped(true)}>Flip</button>
-        </div>
-      )}
-    </div>
-  );
+{!flipped && (
+<div style={{textAlign:'center', marginTop:20}}>
+<button className="btn btn-accent btn-lg" onClick={() => setFlipped(true)}>Flip</button>
+</div>
+)}
+</div>
+);
 }
 
 // --- Quiz Mode ---
 function QuizScreen({ cards, progress, setProgress, onBack }) {
-  const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState(null);
-  const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0 });
-  const [done, setDone] = useState(false);
-  const [options, setOptions] = useState([]);
+const [index, setIndex] = useState(0);
+const [selected, setSelected] = useState(null);
+const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0 });
+const [done, setDone] = useState(false);
+const [options, setOptions] = useState([]);
 
-  const card = cards[index];
+const card = cards[index];
 
-  useEffect(() => {
-    if (card && cards.length >= 2) {
-      const wrongCards = cards.filter(c => c.id !== card.id);
-      const shuffledWrong = wrongCards.sort(() => Math.random() - 0.5).slice(0, 3);
-      const allOptions = [{ text: card.back, correct: true }, ...shuffledWrong.map(c => ({ text: c.back, correct: false }))];
-      setOptions(allOptions.sort(() => Math.random() - 0.5));
-    }
-  }, [index, card]);
+useEffect(() => {
+if (card && cards.length >= 2) {
+const wrongCards = cards.filter(c => c.id !== card.id);
+const shuffledWrong = wrongCards.sort(() => Math.random() - 0.5).slice(0, 3);
+const allOptions = [{ text: card.back, correct: true }, ...shuffledWrong.map(c => ({ text: c.back, correct: false }))];
+setOptions(allOptions.sort(() => Math.random() - 0.5));
+}
+}, [index, card]);
 
-  function handleSelect(opt, idx) {
-    if (selected !== null) return;
-    setSelected(idx);
+function handleSelect(opt, idx) {
+if (selected !== null) return;
+setSelected(idx);
 
-    const quality = opt.correct ? 2 : 0;
-    const updated = getNextReview(progress[card.id], quality);
-    setProgress(prev => ({ ...prev, [card.id]: updated }));
+const quality = opt.correct ? 2 : 0;
+const updated = getNextReview(progress[card.id], quality);
+setProgress(prev => ({ ...prev, [card.id]: updated }), card.id, updated);
 
-    if (opt.correct) {
-      setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
-    } else {
-      setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
-    }
+if (opt.correct) {
+setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
+} else {
+setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
+}
 
-    setTimeout(() => {
-      if (index < cards.length - 1) {
-        setIndex(index + 1);
-        setSelected(null);
-      } else {
-        setDone(true);
-      }
-    }, 1200);
-  }
+setTimeout(() => {
+if (index < cards.length - 1) {
+setIndex(index + 1);
+setSelected(null);
+} else {
+setDone(true);
+}
+}, 1200);
+}
 
-  if (done) {
-    const pct = cards.length > 0 ? Math.round((sessionStats.correct / cards.length) * 100) : 0;
-    return (
-      <div className="animate-in" style={{padding:24, maxWidth:500, margin:'0 auto', textAlign:'center'}}>
-        <div style={{fontSize:'3rem', marginBottom:16}}>{pct >= 80 ? 'ð' : pct >= 50 ? 'ð' : 'ð'}</div>
-        <h2 style={{marginBottom:8}}>Quiz Complete!</h2>
-        <div style={{display:'flex', justifyContent:'center', gap:24, marginBottom:28}}>
-          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--green)'}}>{sessionStats.correct}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Correct</div></div>
-          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--red)'}}>{sessionStats.incorrect}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Wrong</div></div>
-          <div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--accent)'}}>{pct}%</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Score</div></div>
-        </div>
-        <button className="btn btn-accent btn-lg" onClick={onBack}>Back to Home</button>
-      </div>
-    );
-  }
+if (done) {
+const pct = cards.length > 0 ? Math.round((sessionStats.correct / cards.length) * 100) : 0;
+return (
+<div className="animate-in" style={{padding:24, maxWidth:500, margin:'0 auto', textAlign:'center'}}>
+<div style={{fontSize:'3rem', marginBottom:16}}>{pct >= 80 ? '🏆' : pct >= 50 ? '👌' : '📖'}</div>
+<h2 style={{marginBottom:8}}>Quiz Complete!</h2>
+<div style={{display:'flex', justifyContent:'center', gap:24, marginBottom:28}}>
+<div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--green)'}}>{sessionStats.correct}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Correct</div></div>
+<div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--red)'}}>{sessionStats.incorrect}</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Wrong</div></div>
+<div><div style={{fontSize:'1.8rem', fontWeight:700, color:'var(--accent)'}}>{pct}%</div><div style={{fontSize:'0.75rem', color:'var(--text2)'}}>Score</div></div>
+</div>
+<button className="btn btn-accent btn-lg" onClick={onBack}>Back to Home</button>
+</div>
+);
+}
 
-  if (!card || cards.length < 2) {
-    return (
-      <div style={{padding:24, textAlign:'center'}}>
-        <p>Need at least 2 cards for quiz mode.</p>
-        <button className="btn btn-accent" style={{marginTop:16}} onClick={onBack}>Back</button>
-      </div>
-    );
-  }
+if (!card || cards.length < 2) {
+return (
+<div style={{padding:24, textAlign:'center'}}>
+<p>Need at least 2 cards for quiz mode.</p>
+<button className="btn btn-accent" style={{marginTop:16}} onClick={onBack}>Back</button>
+</div>
+);
+}
 
-  return (
-    <div className="animate-in" style={{padding:24, maxWidth:560, margin:'0 auto'}}>
-      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
-        <button className="btn btn-outline btn-sm" onClick={onBack}>â Back</button>
-        <span style={{fontSize:'0.8rem', color:'var(--text2)'}}>Quiz Mode</span>
-      </div>
+return (
+<div className="animate-in" style={{padding:24, maxWidth:560, margin:'0 auto'}}>
+<div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
+<button className="btn btn-outline btn-sm" onClick={onBack}>← Back</button>
+<span style={{fontSize:'0.8rem', color:'var(--text2)'}}>Quiz Mode</span>
+</div>
 
-      <div className="progress-bar" style={{marginBottom:24}}>
-        <div className="progress-fill" style={{width: ((index) / cards.length) * 100 + '%', background:'var(--accent)'}} />
-      </div>
+<div className="progress-bar" style={{marginBottom:24}}>
+<div className="progress-fill" style={{width: ((index) / cards.length) * 100 + '%', background:'var(--accent)'}} />
+</div>
 
-      <div style={{background:'var(--surface)', borderRadius:16, padding:'28px 24px', border:'1px solid var(--surface2)', marginBottom:20, textAlign:'center'}}>
-        <div style={{fontSize:'0.7rem', color:'var(--text2)', textTransform:'uppercase', letterSpacing:2, marginBottom:12}}>Question {index + 1} of {cards.length}</div>
-        <div style={{fontSize:'1.15rem', lineHeight:1.6}}>{card.front}</div>
-      </div>
+<div style={{background:'var(--surface)', borderRadius:16, padding:'28px 24px', border:'1px solid var(--surface2)', marginBottom:20, textAlign:'center'}}>
+<div style={{fontSize:'0.7rem', color:'var(--text2)', textTransform:'uppercase', letterSpacing:2, marginBottom:12}}>Question {index + 1} of {cards.length}</div>
+<div style={{fontSize:'1.15rem', lineHeight:1.6}}>{card.front}</div>
+</div>
 
-      <div style={{display:'flex', flexDirection:'column', gap:10}}>
-        {options.map((opt, i) => (
-          <button
-            key={i}
-            className={`quiz-option ${selected !== null ? (opt.correct ? 'correct' : i === selected ? 'wrong' : '') : ''}`}
-            onClick={() => handleSelect(opt, i)}
-            disabled={selected !== null}
-          >
-            <span style={{marginRight:10, opacity:0.5, fontWeight:700}}>{String.fromCharCode(65 + i)}.</span>
-            {opt.text}
-          </button>
-        ))}
-      </div>
+<div style={{display:'flex', flexDirection:'column', gap:10}}>
+{options.map((opt, i) => (
+<button
+key={i}
+className={`quiz-option ${selected !== null ? (opt.correct ? 'correct' : i === selected ? 'wrong' : '') : ''}`}
+onClick={() => handleSelect(opt, i)}
+disabled={selected !== null}
+>
+<span style={{marginRight:10, opacity:0.5, fontWeight:700}}>{String.fromCharCode(65 + i)}.</span>
+{opt.text}
+</button>
+))}
+</div>
 
-      {selected !== null && (
-        <div className="animate-in" style={{textAlign:'center', marginTop:14, fontSize:'0.85rem', color: options[selected]?.correct ? 'var(--green)' : 'var(--red)'}}>
-          {options[selected]?.correct ? 'â Correct!' : `â The answer was: ${card.back}`}
-        </div>
-      )}
-    </div>
-  );
+{selected !== null && (
+<div className="animate-in" style={{textAlign:'center', marginTop:14, fontSize:'0.85rem', color: options[selected]?.correct ? 'var(--green)' : 'var(--red)'}}>
+{options[selected]?.correct ? '✓ Correct!' : `✗ The answer was: ${card.back}`}
+</div>
+)}
+</div>
+);
 }
 
 // --- Admin Panel ---
-function AdminPanel({ cards, setCards, onBack, refreshCards }) {
-  const [authed, setAuthed] = useState(() => loadFromStorage(STORAGE_KEYS.ADMIN_AUTH, false));
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [editingCard, setEditingCard] = useState(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [newFront, setNewFront] = useState('');
-  const [newBack, setNewBack] = useState('');
-  const [importText, setImportText] = useState('');
-  const [showImport, setShowImport] = useState(false);
-  const [showExport, setShowExport] = useState(false);
-  const [saving, setSaving] = useState(false);
+function AdminPanel({ cards, setCards, onBack, refreshCards, isAdmin }) {
+const [editingCard, setEditingCard] = useState(null);
+const [showAdd, setShowAdd] = useState(false);
+const [newFront, setNewFront] = useState('');
+const [newBack, setNewBack] = useState('');
+const [importText, setImportText] = useState('');
+const [showImport, setShowImport] = useState(false);
+const [showExport, setShowExport] = useState(false);
+const [saving, setSaving] = useState(false);
+const [error, setError] = useState('');
 
-  function login() {
-    if (password === ADMIN_PASSWORD) {
-      setAuthed(true);
-      saveToStorage(STORAGE_KEYS.ADMIN_AUTH, true);
-      setError('');
-    } else {
-      setError('Wrong password');
-    }
-  }
+// Belt-and-suspenders: the "Admin Panel" button is hidden from non-admins,
+// but Row Level Security in Supabase is what actually enforces this --
+// even if someone lands here directly they can't write anything.
+if (!isAdmin) {
+return (
+<div style={{padding:24, maxWidth:420, margin:'60px auto', textAlign:'center'}}>
+<p style={{color:'var(--text2)', marginBottom:16}}>You need admin access to view this page.</p>
+<button className="btn btn-accent" onClick={onBack}>Back</button>
+</div>
+);
+}
 
-  function logout() {
-    setAuthed(false);
-    saveToStorage(STORAGE_KEYS.ADMIN_AUTH, false);
-  }
+async function addCard() {
+if (!newFront.trim() || !newBack.trim()) return;
+setSaving(true);
+const newCard = await insertCard(newFront.trim(), newBack.trim());
+if (newCard) {
+setCards(prev => [...prev, newCard]);
+setNewFront('');
+setNewBack('');
+setShowAdd(false);
+} else {
+setError('Failed to add card. Check your Supabase connection.');
+setTimeout(() => setError(''), 3000);
+}
+setSaving(false);
+}
 
-  async function addCard() {
-    if (!newFront.trim() || !newBack.trim()) return;
-    setSaving(true);
-    const newCard = await insertCard(newFront.trim(), newBack.trim());
-    if (newCard) {
-      setCards(prev => [...prev, newCard]);
-      setNewFront('');
-      setNewBack('');
-      setShowAdd(false);
-    } else {
-      setError('Failed to add card. Check your Supabase connection.');
-      setTimeout(() => setError(''), 3000);
-    }
-    setSaving(false);
-  }
+async function handleDelete(id) {
+setSaving(true);
+const ok = await deleteCardFromDB(id);
+if (ok) {
+setCards(prev => prev.filter(c => c.id !== id));
+} else {
+setError('Failed to delete card.');
+setTimeout(() => setError(''), 3000);
+}
+setSaving(false);
+}
 
-  async function handleDelete(id) {
-    setSaving(true);
-    const ok = await deleteCardFromDB(id);
-    if (ok) {
-      setCards(prev => prev.filter(c => c.id !== id));
-    } else {
-      setError('Failed to delete card.');
-      setTimeout(() => setError(''), 3000);
-    }
-    setSaving(false);
-  }
+async function saveEdit() {
+if (!editingCard) return;
+setSaving(true);
+const ok = await updateCard(editingCard.id, editingCard.front, editingCard.back);
+if (ok) {
+setCards(prev => prev.map(c => c.id === editingCard.id ? editingCard : c));
+setEditingCard(null);
+} else {
+setError('Failed to save changes.');
+setTimeout(() => setError(''), 3000);
+}
+setSaving(false);
+}
 
-  async function saveEdit() {
-    if (!editingCard) return;
-    setSaving(true);
-    const ok = await updateCard(editingCard.id, editingCard.front, editingCard.back);
-    if (ok) {
-      setCards(prev => prev.map(c => c.id === editingCard.id ? editingCard : c));
-      setEditingCard(null);
-    } else {
-      setError('Failed to save changes.');
-      setTimeout(() => setError(''), 3000);
-    }
-    setSaving(false);
-  }
+async function handleImport() {
+try {
+const data = JSON.parse(importText);
+if (Array.isArray(data) && data.length > 0) {
+setSaving(true);
+const toImport = data.map(c => ({
+front: c.front || c.question || '',
+back: c.back || c.answer || '',
+tags: c.tags || [],
+}));
+const imported = await importCardsToDB(toImport);
+if (imported.length > 0) {
+setCards(prev => [...prev, ...imported]);
+setImportText('');
+setShowImport(false);
+} else {
+setError('Failed to import cards.');
+setTimeout(() => setError(''), 3000);
+}
+setSaving(false);
+}
+} catch { setError('Invalid JSON format'); setTimeout(() => setError(''), 3000); }
+}
 
-  async function handleImport() {
-    try {
-      const data = JSON.parse(importText);
-      if (Array.isArray(data) && data.length > 0) {
-        setSaving(true);
-        const toImport = data.map(c => ({
-          front: c.front || c.question || '',
-          back: c.back || c.answer || '',
-          tags: c.tags || [],
-        }));
-        const imported = await importCardsToDB(toImport);
-        if (imported.length > 0) {
-          setCards(prev => [...prev, ...imported]);
-          setImportText('');
-          setShowImport(false);
-        } else {
-          setError('Failed to import cards.');
-          setTimeout(() => setError(''), 3000);
-        }
-        setSaving(false);
-      }
-    } catch { setError('Invalid JSON format'); setTimeout(() => setError(''), 3000); }
-  }
+return (
+<div className="animate-in" style={{padding:24, maxWidth:700, margin:'0 auto'}}>
+<div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
+<div style={{display:'flex', alignItems:'center', gap:12}}>
+<button className="btn btn-outline btn-sm" onClick={onBack}>← Back</button>
+<h2 style={{fontSize:'1.2rem'}}>Admin Panel</h2>
+</div>
+<div style={{display:'flex', gap:8}}>
+<button className="btn btn-outline btn-sm" onClick={refreshCards} title="Refresh from database">↻ Refresh</button>
+</div>
+</div>
 
-  if (!authed) {
-    return (
-      <div className="animate-in" style={{padding:24, maxWidth:400, margin:'60px auto', textAlign:'center'}}>
-        <div style={{fontSize:'2rem', marginBottom:12}}>ð</div>
-        <h2 style={{marginBottom:16}}>Admin Login</h2>
-        <input
-          className="input"
-          type="password"
-          placeholder="Enter admin password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && login()}
-          style={{marginBottom:10}}
-        />
-        {error && <div style={{color:'var(--red)', fontSize:'0.85rem', marginBottom:10}}>{error}</div>}
-        <div style={{display:'flex', gap:8, justifyContent:'center'}}>
-          <button className="btn btn-outline" onClick={onBack}>Cancel</button>
-          <button className="btn btn-accent" onClick={login}>Sign In</button>
-        </div>
-      </div>
-    );
-  }
+{/* Action bar */}
+<div style={{display:'flex', gap:8, marginBottom:20, flexWrap:'wrap'}}>
+<button className="btn btn-accent btn-sm" onClick={() => setShowAdd(true)}>+ Add Card</button>
+<button className="btn btn-surface btn-sm" onClick={() => setShowImport(true)}>Import JSON</button>
+<button className="btn btn-surface btn-sm" onClick={() => setShowExport(true)}>Export JSON</button>
+</div>
 
-  return (
-    <div className="animate-in" style={{padding:24, maxWidth:700, margin:'0 auto'}}>
-      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
-        <div style={{display:'flex', alignItems:'center', gap:12}}>
-          <button className="btn btn-outline btn-sm" onClick={onBack}>â Back</button>
-          <h2 style={{fontSize:'1.2rem'}}>Admin Panel</h2>
-        </div>
-        <div style={{display:'flex', gap:8}}>
-          <button className="btn btn-outline btn-sm" onClick={refreshCards} title="Refresh from database">â» Refresh</button>
-          <button className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
-        </div>
-      </div>
+{error && <div style={{color:'var(--red)', fontSize:'0.85rem', marginBottom:10}}>{error}</div>}
+{saving && <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10, fontSize:'0.85rem', color:'var(--text2)'}}><div className="spinner" /> Saving...</div>}
 
-      {/* Action bar */}
-      <div style={{display:'flex', gap:8, marginBottom:20, flexWrap:'wrap'}}>
-        <button className="btn btn-accent btn-sm" onClick={() => setShowAdd(true)}>+ Add Card</button>
-        <button className="btn btn-surface btn-sm" onClick={() => setShowImport(true)}>Import JSON</button>
-        <button className="btn btn-surface btn-sm" onClick={() => setShowExport(true)}>Export JSON</button>
-      </div>
+{/* Add Card Modal */}
+{showAdd && (
+<div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowAdd(false)}>
+<div className="modal">
+<h3 style={{marginBottom:16}}>Add New Card</h3>
+<label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Front (Question)</label>
+<textarea className="input textarea" value={newFront} onChange={e => setNewFront(e.target.value)} placeholder="Enter the question..." style={{marginBottom:12}} />
+<label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Back (Answer)</label>
+<textarea className="input textarea" value={newBack} onChange={e => setNewBack(e.target.value)} placeholder="Enter the answer..." style={{marginBottom:16}} />
+<div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+<button className="btn btn-outline btn-sm" onClick={() => setShowAdd(false)}>Cancel</button>
+<button className="btn btn-accent btn-sm" onClick={addCard} disabled={saving}>{saving ? 'Saving...' : 'Add Card'}</button>
+</div>
+</div>
+</div>
+)}
 
-      {error && <div style={{color:'var(--red)', fontSize:'0.85rem', marginBottom:10}}>{error}</div>}
-      {saving && <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10, fontSize:'0.85rem', color:'var(--text2)'}}><div className="spinner" /> Saving...</div>}
+{/* Import Modal */}
+{showImport && (
+<div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowImport(false)}>
+<div className="modal">
+<h3 style={{marginBottom:8}}>Import Cards</h3>
+<p style={{fontSize:'0.8rem', color:'var(--text2)', marginBottom:12}}>Paste a JSON array of objects with "front" and "back" fields.</p>
+<textarea className="input textarea" style={{minHeight:120, marginBottom:12}} value={importText} onChange={e => setImportText(e.target.value)} placeholder='[{"front":"Q1","back":"A1"}]' />
+<div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+<button className="btn btn-outline btn-sm" onClick={() => setShowImport(false)}>Cancel</button>
+<button className="btn btn-accent btn-sm" onClick={handleImport} disabled={saving}>{saving ? 'Importing...' : 'Import'}</button>
+</div>
+</div>
+</div>
+)}
 
-      {/* Add Card Modal */}
-      {showAdd && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowAdd(false)}>
-          <div className="modal">
-            <h3 style={{marginBottom:16}}>Add New Card</h3>
-            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Front (Question)</label>
-            <textarea className="input textarea" value={newFront} onChange={e => setNewFront(e.target.value)} placeholder="Enter the question..." style={{marginBottom:12}} />
-            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Back (Answer)</label>
-            <textarea className="input textarea" value={newBack} onChange={e => setNewBack(e.target.value)} placeholder="Enter the answer..." style={{marginBottom:16}} />
-            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-              <button className="btn btn-outline btn-sm" onClick={() => setShowAdd(false)}>Cancel</button>
-              <button className="btn btn-accent btn-sm" onClick={addCard} disabled={saving}>{saving ? 'Saving...' : 'Add Card'}</button>
-            </div>
-          </div>
-        </div>
-      )}
+{/* Export Modal */}
+{showExport && (
+<div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowExport(false)}>
+<div className="modal">
+<h3 style={{marginBottom:12}}>Export Cards</h3>
+<textarea className="input textarea" style={{minHeight:150, fontFamily:'monospace', fontSize:'0.8rem'}} readOnly value={JSON.stringify(cards.map(c => ({front: c.front, back: c.back})), null, 2)} />
+<div style={{display:'flex', gap:8, justifyContent:'flex-end', marginTop:12}}>
+<button className="btn btn-outline btn-sm" onClick={() => setShowExport(false)}>Close</button>
+<button className="btn btn-accent btn-sm" onClick={() => { navigator.clipboard.writeText(JSON.stringify(cards.map(c => ({front: c.front, back: c.back})), null, 2)); }}>Copy</button>
+</div>
+</div>
+</div>
+)}
 
-      {/* Import Modal */}
-      {showImport && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowImport(false)}>
-          <div className="modal">
-            <h3 style={{marginBottom:8}}>Import Cards</h3>
-            <p style={{fontSize:'0.8rem', color:'var(--text2)', marginBottom:12}}>Paste a JSON array of objects with "front" and "back" fields.</p>
-            <textarea className="input textarea" style={{minHeight:120, marginBottom:12}} value={importText} onChange={e => setImportText(e.target.value)} placeholder='[{"front":"Q1","back":"A1"}]' />
-            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-              <button className="btn btn-outline btn-sm" onClick={() => setShowImport(false)}>Cancel</button>
-              <button className="btn btn-accent btn-sm" onClick={handleImport} disabled={saving}>{saving ? 'Importing...' : 'Import'}</button>
-            </div>
-          </div>
-        </div>
-      )}
+{/* Edit Card Modal */}
+{editingCard && (
+<div className="modal-overlay" onClick={e => e.target === e.currentTarget && setEditingCard(null)}>
+<div className="modal">
+<h3 style={{marginBottom:16}}>Edit Card #{editingCard.id}</h3>
+<label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Front (Question)</label>
+<textarea className="input textarea" value={editingCard.front} onChange={e => setEditingCard({...editingCard, front: e.target.value})} style={{marginBottom:12}} />
+<label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Back (Answer)</label>
+<textarea className="input textarea" value={editingCard.back} onChange={e => setEditingCard({...editingCard, back: e.target.value})} style={{marginBottom:16}} />
+<div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+<button className="btn btn-outline btn-sm" onClick={() => setEditingCard(null)}>Cancel</button>
+<button className="btn btn-accent btn-sm" onClick={saveEdit} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+</div>
+</div>
+</div>
+)}
 
-      {/* Export Modal */}
-      {showExport && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowExport(false)}>
-          <div className="modal">
-            <h3 style={{marginBottom:12}}>Export Cards</h3>
-            <textarea className="input textarea" style={{minHeight:150, fontFamily:'monospace', fontSize:'0.8rem'}} readOnly value={JSON.stringify(cards.map(c => ({front: c.front, back: c.back})), null, 2)} />
-            <div style={{display:'flex', gap:8, justifyContent:'flex-end', marginTop:12}}>
-              <button className="btn btn-outline btn-sm" onClick={() => setShowExport(false)}>Close</button>
-              <button className="btn btn-accent btn-sm" onClick={() => { navigator.clipboard.writeText(JSON.stringify(cards.map(c => ({front: c.front, back: c.back})), null, 2)); }}>Copy</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Card Modal */}
-      {editingCard && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setEditingCard(null)}>
-          <div className="modal">
-            <h3 style={{marginBottom:16}}>Edit Card #{editingCard.id}</h3>
-            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Front (Question)</label>
-            <textarea className="input textarea" value={editingCard.front} onChange={e => setEditingCard({...editingCard, front: e.target.value})} style={{marginBottom:12}} />
-            <label style={{fontSize:'0.8rem', color:'var(--text2)', display:'block', marginBottom:4}}>Back (Answer)</label>
-            <textarea className="input textarea" value={editingCard.back} onChange={e => setEditingCard({...editingCard, back: e.target.value})} style={{marginBottom:16}} />
-            <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-              <button className="btn btn-outline btn-sm" onClick={() => setEditingCard(null)}>Cancel</button>
-              <button className="btn btn-accent btn-sm" onClick={saveEdit} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Card List */}
-      <div style={{display:'flex', flexDirection:'column', gap:8}}>
-        {cards.length === 0 && <div style={{textAlign:'center', padding:32, color:'var(--text2)'}}>No cards yet. Click "Add Card" to get started.</div>}
-        {cards.map((card, i) => (
-          <div key={card.id} style={{background:'var(--surface)', border:'1px solid var(--surface2)', borderRadius:12, padding:'14px 18px', display:'flex', alignItems:'center', gap:12}}>
-            <div style={{fontSize:'0.75rem', color:'var(--text2)', minWidth:24}}>#{card.id}</div>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{fontSize:'0.9rem', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{card.front}</div>
-              <div style={{fontSize:'0.8rem', color:'var(--text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{card.back}</div>
-            </div>
-            <button className="btn btn-outline btn-sm" onClick={() => setEditingCard({...card})}>Edit</button>
-            <button className="btn btn-sm" style={{background:'transparent', color:'var(--red)', border:'1.5px solid var(--red)'}} onClick={() => handleDelete(card.id)}>Delete</button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+{/* Card List */}
+<div style={{display:'flex', flexDirection:'column', gap:8}}>
+{cards.length === 0 && <div style={{textAlign:'center', padding:32, color:'var(--text2)'}}>No cards yet. Click "Add Card" to get started.</div>}
+{cards.map((card, i) => (
+<div key={card.id} style={{background:'var(--surface)', border:'1px solid var(--surface2)', borderRadius:12, padding:'14px 18px', display:'flex', alignItems:'center', gap:12}}>
+<div style={{fontSize:'0.75rem', color:'var(--text2)', minWidth:24}}>#{card.id}</div>
+<div style={{flex:1, minWidth:0}}>
+<div style={{fontSize:'0.9rem', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{card.front}</div>
+<div style={{fontSize:'0.8rem', color:'var(--text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{card.back}</div>
+</div>
+<button className="btn btn-outline btn-sm" onClick={() => setEditingCard({...card})}>Edit</button>
+<button className="btn btn-sm" style={{background:'transparent', color:'var(--red)', border:'1.5px solid var(--red)'}} onClick={() => handleDelete(card.id)}>Delete</button>
+</div>
+))}
+</div>
+</div>
+);
 }
 
 // --- Reset Progress Confirmation ---
 function ResetConfirm({ onConfirm, onCancel }) {
-  return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onCancel()}>
-      <div className="modal" style={{textAlign:'center'}}>
-        <div style={{fontSize:'2rem', marginBottom:12}}>â ï¸</div>
-        <h3 style={{marginBottom:8}}>Reset Your Progress?</h3>
-        <p style={{color:'var(--text2)', fontSize:'0.9rem', marginBottom:20}}>This will clear all your study history and spaced repetition data. Cards will not be affected.</p>
-        <div style={{display:'flex', gap:8, justifyContent:'center'}}>
-          <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
-          <button className="btn btn-red" onClick={onConfirm}>Reset</button>
-        </div>
-      </div>
-    </div>
-  );
+return (
+<div className="modal-overlay" onClick={e => e.target === e.currentTarget && onCancel()}>
+<div className="modal" style={{textAlign:'center'}}>
+<div style={{fontSize:'2rem', marginBottom:12}}>⚠️</div>
+<h3 style={{marginBottom:8}}>Reset Your Progress?</h3>
+<p style={{color:'var(--text2)', fontSize:'0.9rem', marginBottom:20}}>This will clear all your study history and spaced repetition data. Cards will not be affected.</p>
+<div style={{display:'flex', gap:8, justifyContent:'center'}}>
+<button className="btn btn-outline" onClick={onCancel}>Cancel</button>
+<button className="btn btn-red" onClick={onConfirm}>Reset</button>
+</div>
+</div>
+</div>
+);
 }
 
 // ============================================================
 // MAIN APP
 // ============================================================
 function App() {
-  const [screen, setScreen] = useState('home');
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(() => loadFromStorage(STORAGE_KEYS.PROGRESS, {}));
-  const [studyCards, setStudyCards] = useState([]);
-  const [studyTitle, setStudyTitle] = useState('');
-  const [showReset, setShowReset] = useState(false);
-  const [studyKey, setStudyKey] = useState(0);
+const [screen, setScreen] = useState('home');
+const [cards, setCards] = useState([]);
+const [loading, setLoading] = useState(true);
+const [progress, setProgressState] = useState({});
+const [studyCards, setStudyCards] = useState([]);
+const [studyTitle, setStudyTitle] = useState('');
+const [showReset, setShowReset] = useState(false);
+const [studyKey, setStudyKey] = useState(0);
 
-  // Fetch cards from Supabase on mount
-  async function loadCards() {
-    setLoading(true);
-    const data = await fetchCards();
-    setCards(data);
-    setLoading(false);
-  }
+const [user, setUser] = useState(null);
+const [isAdmin, setIsAdmin] = useState(false);
+const [authLoading, setAuthLoading] = useState(true);
+const userRef = useRef(null);
+useEffect(() => { userRef.current = user; }, [user]);
 
-  useEffect(() => { loadCards(); }, []);
+// Fetch cards from Supabase on mount
+async function loadCards() {
+setLoading(true);
+const data = await fetchCards();
+setCards(data);
+setLoading(false);
+}
 
-  // Persist progress to localStorage
-  useEffect(() => { saveToStorage(STORAGE_KEYS.PROGRESS, progress); }, [progress]);
+async function checkAdmin(currentUser) {
+if (!currentUser) { setIsAdmin(false); return; }
+const { data, error } = await supabase
+.from('flashcard_admins')
+.select('user_id')
+.eq('user_id', currentUser.id)
+.maybeSingle();
+if (error) { console.error(error); setIsAdmin(false); return; }
+setIsAdmin(!!data);
+}
 
-  function startStudy(mode) {
-    let selected = [...cards];
-    let title = 'Study All';
-    if (mode === 'shuffle') {
-      selected = selected.sort(() => Math.random() - 0.5);
-      title = 'Shuffle Mode';
-    }
-    setStudyCards(selected);
-    setStudyTitle(title);
-    setScreen('study');
-  }
+// One-time merge: if someone studied as a guest (localStorage) and then
+// signs in for the first time, carry that progress up to Supabase instead
+// of silently losing it.
+async function migrateLocalProgress(currentUser) {
+const local = loadFromStorage(STORAGE_KEYS.PROGRESS, {});
+const entries = Object.entries(local);
+if (entries.length === 0) return;
+const remote = await fetchProgress(currentUser.id);
+for (const [cardId, entry] of entries) {
+if (!remote[cardId]) {
+await saveProgressRow(currentUser.id, cardId, entry);
+}
+}
+}
 
-  function startMissed() {
-    const missed = cards.filter(c => progress[c.id]?.lastQuality < 2);
-    setStudyCards(missed);
-    setStudyTitle('Missed Cards Review');
-    setScreen('study');
-  }
+async function loadProgressForUser(currentUser) {
+if (currentUser) {
+await migrateLocalProgress(currentUser);
+const remote = await fetchProgress(currentUser.id);
+setProgressState(remote);
+} else {
+setProgressState(loadFromStorage(STORAGE_KEYS.PROGRESS, {}));
+}
+}
 
-  function startSpaced() {
-    const now = Date.now();
-    const due = cards.filter(c => {
-      const p = progress[c.id];
-      return p && p.nextReview && p.nextReview <= now;
-    });
-    setStudyCards(due);
-    setStudyTitle('Spaced Review');
-    setScreen('study');
-  }
+useEffect(() => {
+loadCards();
 
-  function updateProgress(newProgress) {
-    setProgress(newProgress);
-  }
+supabase.auth.getSession().then(async ({ data: { session } }) => {
+const u = session?.user ?? null;
+setUser(u);
+await checkAdmin(u);
+await loadProgressForUser(u);
+setAuthLoading(false);
+});
 
-  function resetProgress() {
-    setProgress({});
-    setShowReset(false);
-  }
+const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+const u = session?.user ?? null;
+const wasUser = userRef.current;
+setUser(u);
+await checkAdmin(u);
+// Only reload progress on an actual sign-in/sign-out transition, not
+// on token refreshes for the same user.
+if ((wasUser?.id ?? null) !== (u?.id ?? null)) {
+await loadProgressForUser(u);
+}
+});
 
-  return (
-    <div style={{minHeight:'100vh'}}>
-      <nav className="nav">
-        <div className="nav-title" style={{cursor:'pointer'}} onClick={() => { setScreen('home'); loadCards(); }}>ð Flashcards</div>
-        <div style={{display:'flex', gap:8, alignItems:'center'}}>
-          {screen === 'home' && (
-            <button className="btn btn-outline btn-sm" onClick={() => setShowReset(true)} title="Reset progress">
-              Reset Progress
-            </button>
-          )}
-        </div>
-      </nav>
+return () => listener.subscription.unsubscribe();
+}, []);
 
-      {screen === 'home' && (
-        <HomeScreen
-          cards={cards}
-          progress={progress}
-          loading={loading}
-          onStartStudy={startStudy}
-          onStartMissed={startMissed}
-          onStartQuiz={() => { setStudyCards([...cards].sort(() => Math.random() - 0.5)); setScreen('quiz'); }}
-          onStartSpaced={startSpaced}
-          onAdmin={() => setScreen('admin')}
-        />
-      )}
+// Guests: keep localStorage in sync. Signed-in users are written through
+// to Supabase directly in setProgress below, so this is a no-op for them.
+useEffect(() => {
+if (!user) saveToStorage(STORAGE_KEYS.PROGRESS, progress);
+}, [progress, user]);
 
-      {screen === 'study' && (
-        <StudyScreen
-          cards={studyCards}
-          progress={progress}
-          setProgress={updateProgress}
-          onBack={() => { setScreen('home'); loadCards(); }}
-          key={studyKey}
-          onStartSubset={(subset, subTitle) => { setStudyCards(subset); setStudyTitle(subTitle); setStudyKey(k => k + 1); }}
-          title={studyTitle}
-        />
-      )}
+// Wraps setProgress so a single card update also gets persisted --
+// components call this the same way they'd call a plain setState.
+function setProgress(updaterOrValue, cardId, entry) {
+setProgressState(updaterOrValue);
+if (user && cardId !== undefined && entry !== undefined) {
+saveProgressRow(user.id, cardId, entry);
+}
+}
 
-      {screen === 'quiz' && (
-        <QuizScreen
-          cards={studyCards}
-          progress={progress}
-          setProgress={updateProgress}
-          onBack={() => { setScreen('home'); loadCards(); }}
-        />
-      )}
+function startStudy(mode) {
+let selected = [...cards];
+let title = 'Study All';
+if (mode === 'shuffle') {
+selected = selected.sort(() => Math.random() - 0.5);
+title = 'Shuffle Mode';
+}
+setStudyCards(selected);
+setStudyTitle(title);
+setScreen('study');
+}
 
-      {screen === 'admin' && (
-        <AdminPanel
-          cards={cards}
-          setCards={setCards}
-          onBack={() => { setScreen('home'); loadCards(); }}
-          refreshCards={loadCards}
-        />
-      )}
+function startMissed() {
+const missed = cards.filter(c => progress[c.id]?.lastQuality < 2);
+setStudyCards(missed);
+setStudyTitle('Missed Cards Review');
+setScreen('study');
+}
 
-      {showReset && <ResetConfirm onConfirm={resetProgress} onCancel={() => setShowReset(false)} />}
-    </div>
-  );
+function startSpaced() {
+const now = Date.now();
+const due = cards.filter(c => {
+const p = progress[c.id];
+return p && p.nextReview && p.nextReview <= now;
+});
+setStudyCards(due);
+setStudyTitle('Spaced Review');
+setScreen('study');
+}
+
+async function resetProgress() {
+setProgressState({});
+setShowReset(false);
+if (user) {
+await clearProgressRows(user.id);
+} else {
+saveToStorage(STORAGE_KEYS.PROGRESS, {});
+}
+}
+
+return (
+<div style={{minHeight:'100vh'}}>
+<nav className="nav">
+<div className="nav-title" style={{cursor:'pointer'}} onClick={() => { setScreen('home'); loadCards(); }}>📚 Flashcards</div>
+<div style={{display:'flex', gap:8, alignItems:'center'}}>
+{screen === 'home' && (
+<button className="btn btn-outline btn-sm" onClick={() => setShowReset(true)} title="Reset progress">
+Reset Progress
+</button>
+)}
+{!authLoading && (
+<AuthControl user={user} isAdmin={isAdmin} onSignedOut={() => setScreen('home')} />
+)}
+</div>
+</nav>
+
+{screen === 'home' && (
+<HomeScreen
+cards={cards}
+progress={progress}
+loading={loading}
+isAdmin={isAdmin}
+onStartStudy={startStudy}
+onStartMissed={startMissed}
+onStartQuiz={() => { setStudyCards([...cards].sort(() => Math.random() - 0.5)); setScreen('quiz'); }}
+onStartSpaced={startSpaced}
+onAdmin={() => setScreen('admin')}
+/>
+)}
+
+{screen === 'study' && (
+<StudyScreen
+cards={studyCards}
+progress={progress}
+setProgress={setProgress}
+onBack={() => { setScreen('home'); loadCards(); }}
+key={studyKey}
+onStartSubset={(subset, subTitle) => { setStudyCards(subset); setStudyTitle(subTitle); setStudyKey(k => k + 1); }}
+title={studyTitle}
+/>
+)}
+
+{screen === 'quiz' && (
+<QuizScreen
+cards={studyCards}
+progress={progress}
+setProgress={setProgress}
+onBack={() => { setScreen('home'); loadCards(); }}
+/>
+)}
+
+{screen === 'admin' && (
+<AdminPanel
+cards={cards}
+setCards={setCards}
+onBack={() => { setScreen('home'); loadCards(); }}
+refreshCards={loadCards}
+isAdmin={isAdmin}
+/>
+)}
+
+{showReset && <ResetConfirm onConfirm={resetProgress} onCancel={() => setShowReset(false)} />}
+</div>
+);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
