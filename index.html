@@ -44,15 +44,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .card-slide-wrap.card-enter-start { transition: none !important; transform: translateX(110%) rotate(6deg); opacity: 0; }
 
 /* Fun grade feedback popup: a random checkmark/emoji + message that pops
-   over the card for a moment when you get one right. */
-.grade-feedback { position: absolute; top: 50%; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 20; animation: gradePop 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+   over the card and lingers for a few seconds when you get one right --
+   lives outside .card-slide-wrap (see StudyScreen) so it stays put on
+   screen while the card underneath slides out and the next one slides in,
+   and its own lifecycle (see FEEDBACK_DURATION_MS) is independent of the
+   card transition timing. */
+.grade-feedback { position: absolute; top: 50%; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 20; animation: gradePop 2.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 .grade-feedback-icon { font-size: 4.5rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.3)); }
 .grade-feedback-text { font-size: 1.05rem; font-weight: 800; color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.4); background: rgba(0,0,0,0.25); padding: 4px 16px; border-radius: 999px; white-space: nowrap; }
 @keyframes gradePop {
 0% { transform: translate(-50%,-50%) scale(0.3) rotate(-10deg); opacity: 0; }
-20% { transform: translate(-50%,-50%) scale(1.2) rotate(5deg); opacity: 1; }
-35% { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
-80% { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
+8% { transform: translate(-50%,-50%) scale(1.2) rotate(5deg); opacity: 1; }
+15% { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
+85% { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
 100% { transform: translate(-50%,-50%) scale(0.85) translateY(-24px); opacity: 0; }
 }
 
@@ -413,6 +417,12 @@ return { interval, ease, reps, nextReview, lastReview: now, lastQuality: quality
 // ============================================================
 // GRADE FEEDBACK -- fun random animation + sound when you get a card right
 // ============================================================
+// How long the popup stays on screen, start to finish (matches the
+// `gradePop` CSS animation duration). Deliberately much longer than the
+// card's own slide-out/slide-in timing, so it's still lingering over the
+// next card for a while after the deck has already moved on.
+const FEEDBACK_DURATION_MS = 2600;
+
 const CORRECT_FEEDBACK = [
 { icon: '✅', message: 'Nice!' },
 { icon: '🎉', message: 'Great job!' },
@@ -777,9 +787,17 @@ const [showMissedList, setShowMissedList] = useState(false);
 // mid-animation so a fast second click can't land on the wrong card.
 const [transitioning, setTransitioning] = useState(false);
 const [slideClass, setSlideClass] = useState('');
-// A random checkmark/emoji + message that pops over the card for a moment
-// when you get one right (see GradeFeedback / playCorrectSound above).
+// A random checkmark/emoji + message that pops over the card for a few
+// seconds when you get one right (see GradeFeedback / playCorrectSound
+// above). Its own timer (feedbackTimer) is independent of the card
+// slide-out/slide-in timers below, so it keeps lingering even after the
+// deck has already moved on to the next card.
 const [feedback, setFeedback] = useState(null);
+const feedbackTimer = useRef(null);
+
+useEffect(() => {
+return () => { if (feedbackTimer.current) clearTimeout(feedbackTimer.current); };
+}, []);
 
 const card = cards[index];
 
@@ -800,16 +818,22 @@ setTransitioning(true);
 
 if (isCorrect) {
 setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
+// Independent lifecycle from the card transition below -- clear any
+// popup still lingering from a fast previous answer, show the new one,
+// and let it fade on its own clock even after the card has moved on.
+if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
 setFeedback({ ...pickCorrectFeedback(), key: Date.now() });
+feedbackTimer.current = setTimeout(() => setFeedback(null), FEEDBACK_DURATION_MS);
 playCorrectSound();
 } else {
 setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
 setMissedCards(prev => [...prev, card]);
 }
 
-// Correct answers get a beat to enjoy the pop/sound before the card
-// slides away; incorrect ones move on quickly.
-const holdMs = isCorrect ? 450 : 150;
+// Just enough of a beat to register the click before the card moves on
+// -- the fun feedback above no longer waits on this, it has its own
+// much longer timer now.
+const holdMs = isCorrect ? 350 : 150;
 const slideOutMs = 320;
 
 setTimeout(() => {
@@ -817,7 +841,6 @@ setSlideClass('card-exit');
 }, holdMs);
 
 setTimeout(() => {
-setFeedback(null);
 if (index < cards.length - 1) {
 setIndex(index + 1);
 setRevealed(false);
@@ -904,8 +927,18 @@ return (
 <div className="progress-fill" style={{width: progressPct + '%', background:'var(--accent)'}} />
 </div>
 
+{/* GradeFeedback lives outside .card-slide-wrap (a stable, non-sliding
+    parent) so it stays centered in place -- unaffected by, and outlasting,
+    the card underneath sliding out and the next one sliding in. */}
+<div style={{position:'relative'}}>
 <div className={`card-slide-wrap ${slideClass}`}>
-<Flashcard card={card} index={index} total={cards.length} flipped={flipped} onFlip={toggleFlip} />
+{/* key={card.id} forces a fresh card-inner per card, instead of
+    reusing the same DOM node -- otherwise resetting `flipped` on the
+    incoming card would animate it (via .card-inner's own transition)
+    rotating back from the answer side, which reads as the new card
+    "flipping in" instead of just sliding in already question-side-up. */}
+<Flashcard key={card.id} card={card} index={index} total={cards.length} flipped={flipped} onFlip={toggleFlip} />
+</div>
 <GradeFeedback feedback={feedback} />
 </div>
 
