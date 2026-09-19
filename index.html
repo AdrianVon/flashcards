@@ -24,7 +24,7 @@
 --orange: #ea580c;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
 /* Card flip */
 .card-container { perspective: 1000px; width: 100%; max-width: 560px; height: 340px; cursor: pointer; margin: 0 auto; }
@@ -35,6 +35,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .card-back { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; transform: rotateY(180deg); }
 .card-label { position: absolute; top: 16px; left: 20px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; }
 .card-number { position: absolute; top: 16px; right: 20px; font-size: 0.75rem; opacity: 0.7; }
+
+/* Card-to-card slide transition (whole card slides out left, next slides in
+   from the right) -- separate from the flip transform above, which only
+   ever applies to .card-inner. */
+.card-slide-wrap { position: relative; transition: transform 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.32s ease; }
+.card-slide-wrap.card-exit { transform: translateX(-110%) rotate(-6deg); opacity: 0; }
+.card-slide-wrap.card-enter-start { transition: none !important; transform: translateX(110%) rotate(6deg); opacity: 0; }
+
+/* Fun grade feedback popup: a random checkmark/emoji + message that pops
+   over the card for a moment when you get one right. */
+.grade-feedback { position: absolute; top: 50%; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 20; animation: gradePop 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.grade-feedback-icon { font-size: 4.5rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.3)); }
+.grade-feedback-text { font-size: 1.05rem; font-weight: 800; color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.4); background: rgba(0,0,0,0.25); padding: 4px 16px; border-radius: 999px; white-space: nowrap; }
+@keyframes gradePop {
+0% { transform: translate(-50%,-50%) scale(0.3) rotate(-10deg); opacity: 0; }
+20% { transform: translate(-50%,-50%) scale(1.2) rotate(5deg); opacity: 1; }
+35% { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
+80% { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
+100% { transform: translate(-50%,-50%) scale(0.85) translateY(-24px); opacity: 0; }
+}
 
 /* Swipe */
 .card-container { touch-action: pan-y; user-select: none; }
@@ -391,6 +411,57 @@ return { interval, ease, reps, nextReview, lastReview: now, lastQuality: quality
 }
 
 // ============================================================
+// GRADE FEEDBACK -- fun random animation + sound when you get a card right
+// ============================================================
+const CORRECT_FEEDBACK = [
+{ icon: '✅', message: 'Nice!' },
+{ icon: '🎉', message: 'Great job!' },
+{ icon: '🔥', message: "You're on fire!" },
+{ icon: '⭐', message: 'Correct!' },
+{ icon: '💪', message: 'Nailed it!' },
+{ icon: '😄', message: 'Awesome!' },
+{ icon: '🙌', message: 'Boom!' },
+];
+
+function pickCorrectFeedback() {
+return CORRECT_FEEDBACK[Math.floor(Math.random() * CORRECT_FEEDBACK.length)];
+}
+
+// Synthesizes a short, randomized "success" chime with the Web Audio API --
+// no audio file to ship, and it only ever runs from a click handler so
+// browser autoplay restrictions don't block it.
+function playCorrectSound() {
+try {
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+if (!AudioCtx) return;
+const ctx = new AudioCtx();
+const now = ctx.currentTime;
+const chimes = [
+[523.25, 659.25, 783.99], // C5 E5 G5
+[587.33, 739.99, 880.00], // D5 F#5 A5
+[659.25, 830.61, 987.77], // E5 G#5 B5
+[698.46, 880.00, 1046.50], // F5 A5 C6
+];
+const notes = chimes[Math.floor(Math.random() * chimes.length)];
+notes.forEach((freq, i) => {
+const osc = ctx.createOscillator();
+const gain = ctx.createGain();
+osc.type = 'sine';
+osc.frequency.value = freq;
+const start = now + i * 0.09;
+gain.gain.setValueAtTime(0, start);
+gain.gain.linearRampToValueAtTime(0.16, start + 0.02);
+gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+osc.connect(gain);
+gain.connect(ctx.destination);
+osc.start(start);
+osc.stop(start + 0.32);
+});
+setTimeout(() => ctx.close(), 600);
+} catch (e) { /* audio is a nice-to-have -- never block grading on it */ }
+}
+
+// ============================================================
 // COMPONENTS
 // ============================================================
 
@@ -419,6 +490,20 @@ title="View attached image"
 >
 📎 View Image
 </button>
+);
+}
+
+// Pops a random checkmark/emoji + message over the card for a moment when
+// you grade a card correct. Purely decorative -- pointer-events:none so it
+// never blocks a click, and a fresh `key` each time so the CSS animation
+// restarts even if the same icon gets picked twice in a row.
+function GradeFeedback({ feedback }) {
+if (!feedback) return null;
+return (
+<div key={feedback.key} className="grade-feedback">
+<div className="grade-feedback-icon">{feedback.icon}</div>
+<div className="grade-feedback-text">{feedback.message}</div>
+</div>
 );
 }
 
@@ -687,46 +772,73 @@ const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, tot
 const [missedCards, setMissedCards] = useState([]);
 const [done, setDone] = useState(false);
 const [showMissedList, setShowMissedList] = useState(false);
+// Card-to-card transition: the whole card slides out to the left, the next
+// one slides in from the right. `transitioning` blocks flipping/grading
+// mid-animation so a fast second click can't land on the wrong card.
+const [transitioning, setTransitioning] = useState(false);
+const [slideClass, setSlideClass] = useState('');
+// A random checkmark/emoji + message that pops over the card for a moment
+// when you get one right (see GradeFeedback / playCorrectSound above).
+const [feedback, setFeedback] = useState(null);
 
 const card = cards[index];
 
 function toggleFlip() {
-if (graded) return;
+if (graded || transitioning) return;
 setFlipped(f => !f);
 setRevealed(true);
 }
 
 function grade(isCorrect) {
+if (transitioning) return;
 const quality = isCorrect ? 2 : 0;
 const updated = getNextReview(progress[card.id], quality);
 const newProgress = { ...progress, [card.id]: updated };
 setProgress(newProgress, card.id, updated);
 setGraded(true);
+setTransitioning(true);
 
 if (isCorrect) {
 setSessionStats(s => ({ ...s, correct: s.correct + 1 }));
+setFeedback({ ...pickCorrectFeedback(), key: Date.now() });
+playCorrectSound();
 } else {
 setSessionStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
 setMissedCards(prev => [...prev, card]);
 }
 
-// Flip back to the question first (still showing THIS card's content --
-// nothing leaks) and only swap in the next card's content once that 0.5s
-// flip animation has actually finished, so the incoming answer is never
-// visible mid-rotation.
-setTimeout(() => {
-setFlipped(false);
-}, 400);
+// Correct answers get a beat to enjoy the pop/sound before the card
+// slides away; incorrect ones move on quickly.
+const holdMs = isCorrect ? 450 : 150;
+const slideOutMs = 320;
 
 setTimeout(() => {
+setSlideClass('card-exit');
+}, holdMs);
+
+setTimeout(() => {
+setFeedback(null);
 if (index < cards.length - 1) {
 setIndex(index + 1);
 setRevealed(false);
 setGraded(false);
+setFlipped(false);
+// Jump the new card off-screen to the right with no transition, then
+// let it animate into place on the next paint -- so the incoming
+// answer is never visible mid-swap, and the motion actually reads as
+// "next card sliding in" rather than a flip.
+setSlideClass('card-enter-start');
+requestAnimationFrame(() => {
+requestAnimationFrame(() => {
+setSlideClass('');
+setTransitioning(false);
+});
+});
 } else {
 setDone(true);
+setTransitioning(false);
 }
-}, 400 + 520);
+}, holdMs + slideOutMs);
 }
 
 if (done) {
@@ -792,7 +904,10 @@ return (
 <div className="progress-fill" style={{width: progressPct + '%', background:'var(--accent)'}} />
 </div>
 
+<div className={`card-slide-wrap ${slideClass}`}>
 <Flashcard card={card} index={index} total={cards.length} flipped={flipped} onFlip={toggleFlip} />
+<GradeFeedback feedback={feedback} />
+</div>
 
 {revealed && !graded && (
 <div className="animate-in" style={{display:'flex', justifyContent:'center', gap:12, marginTop:20, flexWrap:'wrap'}}>
